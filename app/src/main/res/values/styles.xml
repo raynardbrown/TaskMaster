@@ -1,0 +1,21 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <!--
+         "Theme.AppCompat.Light.NoActionBar"
+         Prevent the application from using the native ActionBar class to provide the app bar.
+    -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <!--
+         Ensure the back button on a child activity is the correct color on the tool bar
+    -->
+    <style name="ToolbarActionBarTheme" parent="ThemeOverlay.AppCompat.ActionBar">
+        <item name="colorControlNormal">@android:color/white</item>
+    </style>
+
+</resources>
