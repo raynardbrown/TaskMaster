@@ -28,4 +28,5 @@
     <!--
          Tools resource strings
     -->
+    <string name="tools_task_group_list_item_name" translatable="true">A Task Group Item</string>
 </resources>
