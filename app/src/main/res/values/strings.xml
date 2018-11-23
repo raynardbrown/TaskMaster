@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">Task Master</string>
+
+    <!--
+         Welcome Activity Strings
+    -->
+    <string name="welcome_activity_title_string" translatable="true">Task Master</string>
+    <string name="welcome_activity_log_in_button_string" translatable="true">Log In</string>
+    <string name="welcome_activity_sign_up_button_string" translatable="true">Sign Up</string>
+
+    <!--
+         Sign Up Activity Strings
+    -->
+    <string name="sign_up_activity_first_name_hint_string" translatable="true">First Name</string>
+    <string name="sign_up_activity_last_name_hint_string" translatable="true">Last Name</string>
+    <string name="sign_up_activity_email_address_hint_string" translatable="true">Email Address</string>
+    <string name="sign_up_activity_password_hint_string" translatable="true">Password</string>
+    <string name="sign_up_activity_create_account_button_string" translatable="true">Create Account</string>
+
+    <!--
+         Log In Activity Strings
+    -->
+    <string name="log_in_activity_email_address_hint_string" translatable="true">Email Address</string>
+    <string name="log_in_activity_password_hint_string" translatable="true">Password</string>
+    <string name="log_in_activity_log_in_button_string" translatable="true">Log In</string>
+    <string name="log_in_activity_forgot_password_string" translatable="true">Forgot your password?</string>
+
+    <!--
+         Tools resource strings
+    -->
+</resources>
