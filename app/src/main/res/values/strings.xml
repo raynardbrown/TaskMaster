@@ -11,6 +11,7 @@
     <!--
          Sign Up Activity Strings
     -->
+    <string name="sign_up_activity_title" translatable="true">Sign Up</string>
     <string name="sign_up_activity_first_name_hint_string" translatable="true">First Name</string>
     <string name="sign_up_activity_last_name_hint_string" translatable="true">Last Name</string>
     <string name="sign_up_activity_email_address_hint_string" translatable="true">Email Address</string>
@@ -20,13 +21,38 @@
     <!--
          Log In Activity Strings
     -->
+    <string name="log_in_activity_title" translatable="true">Log In</string>
     <string name="log_in_activity_email_address_hint_string" translatable="true">Email Address</string>
     <string name="log_in_activity_password_hint_string" translatable="true">Password</string>
     <string name="log_in_activity_log_in_button_string" translatable="true">Log In</string>
     <string name="log_in_activity_forgot_password_string" translatable="true">Forgot your password?</string>
 
     <!--
+         Log In Activity Send Password Dialog Strings
+    -->
+    <string name="log_in_activity_dialog_send_password_title_string" translatable="true">Forgot your password</string>
+    <string name="log_in_activity_dialog_send_password_email_address_hint_string" translatable="true">Email Address</string>
+    <string name="log_in_activity_dialog_send_password_send_password_button_string" translatable="true">Send Password</string>
+    <string name="log_in_activity_dialog_send_password_cancel_button_string" translatable="true">Cancel</string>
+
+    <!--
+         Card Detail Activity Strings
+    -->
+    <string name="card_detail_activity_detailed_description_hint_string" translatable="true">Add Detailed Description</string>
+
+    <!--
          Tools resource strings
     -->
     <string name="tools_task_group_list_item_name" translatable="true">A Task Group Item</string>
+
+    <string name="tools_card_detail_activity_due_date_string" translatable="true">Due, Monday, June 4, 2018 at 12:00 AM</string>
+
+    <string name="tools_long_sample_string" translatable="false">Lorem ipsum dolor sit amet, consectetur
+        adipiscing elit. Etiam at justo finibus, porttitor nibh eget, ultricies turpis. Vivamus eget egestas
+        urna, sit amet malesuada ex. Maecenas sit amet mi vitae ante condimentum convallis. Praesent massa
+        magna, facilisis et blandit sit amet, tristique tristique dui. In eu pellentesque purus. Etiam et
+        ultricies augue. Donec porta euismod vulputate. Nam neque metus, luctus eget venenatis in, egestas
+        at ipsum. Fusce eget sodales diam, ac ullamcorper mi. Aenean ultrices bibendum est. Vivamus
+        tincidunt rhoncus interdum. Vestibulum gravida, risus sed maximus sagittis, orci risus hendrerit
+        dui, vitae suscipit ligula urna sit amet dolor.</string>
 </resources>
