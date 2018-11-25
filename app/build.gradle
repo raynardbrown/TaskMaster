@@ -26,10 +26,6 @@ configurations.all {
     }
 }
 
-
-
-
-
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
@@ -41,6 +37,8 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
 
     implementation 'com.squareup.picasso:picasso:2.5.2'
+
+    implementation 'commons-validator:commons-validator:1.6'
 
     implementation 'com.google.firebase:firebase-auth:12.0.1'
     implementation 'com.google.firebase:firebase-database:12.0.1'
