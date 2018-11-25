@@ -18,6 +18,11 @@
     <string name="sign_up_activity_password_hint_string" translatable="true">Password</string>
     <string name="sign_up_activity_create_account_button_string" translatable="true">Create Account</string>
 
+    <string name="error_sign_up_activity_first_name_string" translatable="true">Please enter first name</string>
+    <string name="error_sign_up_activity_last_name_string" translatable="true">Please enter last name</string>
+    <string name="error_sign_up_activity_email_address_string" translatable="true">Please enter a valid email address</string>
+    <string name="error_sign_up_activity_password_string" translatable="true">Please enter a password</string>
+
     <!--
          Log In Activity Strings
     -->
@@ -27,9 +32,13 @@
     <string name="log_in_activity_log_in_button_string" translatable="true">Log In</string>
     <string name="log_in_activity_forgot_password_string" translatable="true">Forgot your password?</string>
 
+    <string name="error_log_in_activity_email_address_string" translatable="true">Please enter a valid email address</string>
+    <string name="error_log_in_activity_password_string" translatable="true">Please enter a password</string>
+
     <!--
          Log In Activity Send Password Dialog Strings
     -->
+    <string name="log_in_activity_dialog_send_password_tag_string" translatable="true">forgot_password_tag</string>
     <string name="log_in_activity_dialog_send_password_title_string" translatable="true">Forgot your password</string>
     <string name="log_in_activity_dialog_send_password_email_address_hint_string" translatable="true">Email Address</string>
     <string name="log_in_activity_dialog_send_password_send_password_button_string" translatable="true">Send Password</string>
