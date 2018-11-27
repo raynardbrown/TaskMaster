@@ -10,7 +10,7 @@
 
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
 
         <View
             android:id="@+id/task_group_list_item_color_square"
@@ -35,7 +35,8 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/task_group_list_item_color_square"
             app:layout_constraintBottom_toBottomOf="@id/task_group_list_item_color_square"
-            tools:text="@string/tools_task_group_list_item_name"/>
+            android:textSize="24sp"
+            tools:text="@string/tools_task_group_list_item_name_string"/>
 
     </android.support.constraint.ConstraintLayout>
 </layout>
