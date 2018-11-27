@@ -11,6 +11,10 @@
     <android.support.v7.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="2dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
         >
 
         <android.support.constraint.ConstraintLayout
@@ -50,7 +54,9 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/iv_task_list_item_card"
                 android:textSize="16sp"
-                tools:text="My name is Jane Doe, and I shoot portrait photos and many"/>
+                android:fontFamily="sans-serif"
+                android:textColor="#A8000000"
+                tools:text="@string/tools_task_group_activity_task_list_item_short_description_string"/>
 
             <!--
                  Row 3 - Optional row of views, in addition, each view in this row is optional
@@ -80,7 +86,9 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
+                    android:src="@drawable/ic_baseline_notes_24px"
                     tools:src="@drawable/ic_baseline_notes_24px"/>
+
 
                 <ImageView
                     android:id="@+id/iv_task_list_item_attachment"
@@ -88,11 +96,10 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
                     app:layout_constraintStart_toEndOf="@id/iv_task_list_item_detailed_description"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintTop_toTopOf="@id/iv_task_list_item_detailed_description"
+                    app:layout_constraintBottom_toBottomOf="@id/iv_task_list_item_detailed_description"
+                    android:src="@drawable/ic_baseline_attachment_24px"
                     tools:src="@drawable/ic_baseline_attachment_24px"/>
 
                 <TextView
@@ -101,12 +108,10 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="2dp"
                     android:layout_marginEnd="2dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
                     app:layout_constraintStart_toEndOf="@id/iv_task_list_item_attachment"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    tools:text="10"/>
+                    app:layout_constraintTop_toTopOf="@id/iv_task_list_item_attachment"
+                    app:layout_constraintBottom_toBottomOf="@id/iv_task_list_item_attachment"
+                    tools:text="@string/tools_task_group_activity_task_list_item_attachment_count_string"/>
 
                 <ImageView
                     android:id="@+id/iv_task_list_item_checklist"
@@ -114,11 +119,10 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
                     app:layout_constraintStart_toEndOf="@id/tv_task_list_item_attachment_count"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintTop_toTopOf="@id/tv_task_list_item_attachment_count"
+                    app:layout_constraintBottom_toBottomOf="@id/tv_task_list_item_attachment_count"
+                    android:src="@drawable/ic_outline_check_box_24px"
                     tools:src="@drawable/ic_outline_check_box_24px"/>
 
                 <TextView
@@ -127,12 +131,11 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="2dp"
                     android:layout_marginEnd="2dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
                     app:layout_constraintStart_toEndOf="@id/iv_task_list_item_checklist"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    tools:text="0/10"/>
+                    app:layout_constraintTop_toTopOf="@id/iv_task_list_item_checklist"
+                    app:layout_constraintBottom_toBottomOf="@id/iv_task_list_item_checklist"
+                    tools:text="@string/tools_task_group_activity_task_list_item_completion_ratio_string"/>
+
 
                 <ImageView
                     android:id="@+id/iv_task_list_item_due_date"
@@ -140,11 +143,10 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
                     app:layout_constraintStart_toEndOf="@id/tv_task_list_item_checklist_completion_ratio"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintTop_toTopOf="@id/tv_task_list_item_checklist_completion_ratio"
+                    app:layout_constraintBottom_toBottomOf="@id/tv_task_list_item_checklist_completion_ratio"
+                    android:src="@drawable/ic_baseline_schedule_24px"
                     tools:src="@drawable/ic_baseline_schedule_24px"/>
 
                 <TextView
@@ -153,12 +155,10 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="2dp"
                     android:layout_marginEnd="2dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
                     app:layout_constraintStart_toEndOf="@id/iv_task_list_item_due_date"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    tools:text="Nov 30"/>
+                    app:layout_constraintTop_toTopOf="@id/iv_task_list_item_due_date"
+                    app:layout_constraintBottom_toBottomOf="@id/iv_task_list_item_due_date"
+                    tools:text="@string/tools_task_group_activity_task_list_item_due_date_string"/>
 
             </android.support.constraint.ConstraintLayout>
 
