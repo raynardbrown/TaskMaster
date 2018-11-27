@@ -45,6 +45,30 @@
     <string name="log_in_activity_dialog_send_password_cancel_button_string" translatable="true">Cancel</string>
 
     <!--
+         Main Activity Strings
+    -->
+    <string name="main_activity_title_string" translatable="true">Task Groups</string>
+    <string name="main_activity_menu_item_log_out_string" translatable="true">Log out</string>
+    <string name="main_activity_error_no_task_groups_string" translatable="true">No Task Groups</string>
+
+    <!--
+        Main Activity Create Group Dialog Strings
+    -->
+    <string name="main_activity_dialog_create_group_tag_string" translatable="true">create_group_tag</string>
+    <string name="main_activity_dialog_create_group_title_string" translatable="true">Create Group</string>
+    <string name="main_activity_dialog_create_group_group_name_hint_string" translatable="true">Group Name</string>
+    <string name="main_activity_dialog_create_group_create_button_string" translatable="true">Create</string>
+    <string name="main_activity_dialog_create_group_cancel_button_string" translatable="true">Cancel</string>
+
+    <!--
+         Task Group Activity Strings
+    -->
+    <string name="task_group_activity_menu_item_background_string" translatable="true">Background</string>
+    <string name="task_group_activity_task_list_menu_item_move_string" translatable="true">Move list</string>
+    <string name="task_group_activity_task_list_add_card_button_string" translatable="true">Add Card</string>
+    <string name="task_group_activity_task_list_add_task_list_button_string" translatable="true">Add Task List</string>
+
+    <!--
          Card Detail Activity Strings
     -->
     <string name="card_detail_activity_detailed_description_hint_string" translatable="true">Add Detailed Description</string>
@@ -52,7 +76,17 @@
     <!--
          Tools resource strings
     -->
-    <string name="tools_task_group_list_item_name" translatable="true">A Task Group Item</string>
+    <string name="tools_task_group_list_item_name_string" translatable="true">A Task Group Item</string>
+
+    <string name="tools_task_group_activity_task_list_title_string" translatable="true">Card List Name</string>
+
+    <string name="tools_task_group_activity_task_list_item_short_description_string" translatable="true">This is an example of a short description on a task list item.</string>
+
+    <string name="tools_task_group_activity_task_list_item_attachment_count_string" translatable="true">10</string>
+
+    <string name="tools_task_group_activity_task_list_item_completion_ratio_string" translatable="true">0/10</string>
+
+    <string name="tools_task_group_activity_task_list_item_due_date_string" translatable="true">Nov 30</string>
 
     <string name="tools_card_detail_activity_due_date_string" translatable="true">Due, Monday, June 4, 2018 at 12:00 AM</string>
 
