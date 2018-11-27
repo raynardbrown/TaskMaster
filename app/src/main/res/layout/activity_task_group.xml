@@ -11,7 +11,8 @@
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context="com.example.android.taskmaster.view.TaskGroupActivity">
+        tools:context="com.example.android.taskmaster.view.TaskGroupActivity"
+        android:background="#00a5ff">
 
         <android.support.v7.widget.Toolbar
             android:id="@+id/tb_task_group_activity"
@@ -25,6 +26,19 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!--
+             List of task list views
+        -->
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/rv_task_group_activity"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tb_task_group_activity"
+            app:layout_constraintBottom_toBottomOf="parent"
+            />
 
     </android.support.constraint.ConstraintLayout>
 </layout>
