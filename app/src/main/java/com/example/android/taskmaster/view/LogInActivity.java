@@ -1,5 +1,6 @@
 package com.example.android.taskmaster.view;
 
+import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.ActionBar;
@@ -217,6 +218,17 @@ public class LogInActivity extends AppCompatActivity implements IForgotPasswordD
       if(emailFieldIsValid && passwordFieldIsValid)
       {
         // TODO: trigger log in and show progress
+        // TODO: for now fake the login and start the main activity for testing
+        Intent intent = new Intent(LogInActivity.this, MainActivity.class);
+
+        // Also clear the back stack
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK  | Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        startActivity(intent);
+
+        // TODO: We are logged in we no logger need to go back to this activity. Move this to the
+        //       part of the code that handles log in success.
+        finish();
       }
     }
   } // end class LogInClickHandler
