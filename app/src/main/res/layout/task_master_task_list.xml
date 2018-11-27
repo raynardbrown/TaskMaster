@@ -1,15 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <data>
 
     </data>
 
+
+    <!--
+         Holder for the main task list layout and the add task button. The visibility of the root
+         layout depends on which position we are within the recycler view.
+    -->
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+    <!--
+         We want to constrain the width of the task lists so that we give visual hints to the user
+         if more than one task list is available.
+    -->
     <android.support.constraint.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:id="@+id/cl_task_list_root_container"
+        android:layout_width="275dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
         android:background="#808080">
 
         <android.support.constraint.ConstraintLayout
@@ -17,24 +37,37 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="0dp"
+            android:layout_marginBottom="2dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            android:background="#FFFFFF">
+            app:layout_constraintBottom_toTopOf="@id/rv_task_list"
+            android:background="#EFEFEF">
 
+            <!--
+                 This text view and its image button sibling participate in a chain.
+
+                 The text view is the chain head
+            -->
             <TextView
                 android:id="@+id/tv_task_list_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:layout_marginTop="4dp"
-                android:text="Card List Name"
-                android:textSize="20sp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginTop="8dp"
+                android:textSize="14sp"
+                android:fontFamily="sans-serif"
+                android:textStyle="bold"
+                android:textColor="#A8000000"
+                app:layout_constraintHorizontal_chainStyle="spread_inside"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"/>
+                app:layout_constraintEnd_toStartOf="@id/img_button_task_list_menu"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="@string/tools_task_group_activity_task_list_title_string"/>
 
             <!--
                  android:background="?android:attr/selectableItemBackground"
@@ -47,50 +80,113 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:layout_marginEnd="4dp"
-                android:layout_marginBottom="4dp"
-                android:layout_marginTop="4dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginTop="8dp"
                 android:background="?android:attr/selectableItemBackground"
                 android:src="@drawable/ic_baseline_more_vert_24px"
                 app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@id/tv_task_list_title"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"/>
 
         </android.support.constraint.ConstraintLayout>
-        
+
+        <!--
+             Use the background of your parent do not set a background color here.
+
+             Note: Do not set any margins within this recycler view or it does strange things
+                   like adding adding at the end of the recycler view. Also ensure that the
+                   recycler view and its parent have the same layout_width.
+
+                   And finally set the max height constraint to 500dp. Setting it to a value lower
+                   like 300dp for example causes the recycler to have a height of 0? I'm not sure
+                   why?!?!
+        -->
         <android.support.v7.widget.RecyclerView
             android:id="@+id/rv_task_list"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="0dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/cl_task_list_title_bar"
+            android:layout_width="275dp"
+            android:layout_height="wrap_content"
+            app:layout_constrainedHeight="true"
+            app:layout_constrainedWidth="false"
             app:layout_constraintBottom_toTopOf="@id/button_task_list_add_card"
-            android:background="#FFFFFF"/>
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight_max="500dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/cl_task_list_title_bar"/>
+
 
         <TextView
             android:id="@+id/button_task_list_add_card"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="36dp"
             android:layout_marginStart="0dp"
             android:layout_marginEnd="0dp"
-            android:layout_marginTop="0dp"
+            android:layout_marginTop="2dp"
             android:layout_marginBottom="0dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/rv_task_list"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintVertical_bias="1.0"
             android:textAllCaps="false"
-            android:background="#FFFFFF"
-            android:textSize="20sp"
+            android:background="#EFEFEF"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif"
+            android:textStyle="bold"
+            android:textColor="#DD1A9E01"
             android:gravity="center"
-            android:text="Add Card"/>
+            android:text="@string/task_group_activity_task_list_add_card_button_string"/>
+
 
     </android.support.constraint.ConstraintLayout>
+
+    <!--
+         Sibling layout that hosts the add task list button.
+    -->
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/cl_task_add_task_list_button_container"
+        android:layout_width="275dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/button_task_list_add_task_list"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="0dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintVertical_bias="1.0"
+            android:textAllCaps="false"
+            android:background="#EFEFEF"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif"
+            android:textStyle="bold"
+            android:textColor="#DD1A9E01"
+            android:gravity="center"
+            android:text="@string/task_group_activity_task_list_add_task_list_button_string"/>
+
+    </android.support.constraint.ConstraintLayout>
+
+
+    </LinearLayout>
+
 </layout>
