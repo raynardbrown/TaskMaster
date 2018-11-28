@@ -69,9 +69,51 @@
     <string name="task_group_activity_task_list_add_task_list_button_string" translatable="true">Add Task List</string>
 
     <!--
+         Task Group Activity Choose Background Dialog Strings
+    -->
+    <string name="task_group_activity_dialog_choose_background_tag_string" translatable="true">choose_background_tag</string>
+    <string name="task_group_activity_dialog_choose_background_title_string" translatable="true">Choose Background</string>
+    <string name="task_group_activity_dialog_choose_background_ok_button_string" translatable="true">OK</string>
+    <string name="task_group_activity_dialog_choose_background_cancel_button_string" translatable="true">Cancel</string>
+
+    <!--
+         Task Group Activity Add Card Dialog Strings
+    -->
+    <string name="task_group_activity_dialog_add_card_tag_string" translatable="true">add_card_tag</string>
+    <string name="task_group_activity_dialog_add_card_title_string" translatable="true">Add Card</string>
+    <string name="task_group_activity_dialog_add_card_card_title_hint_string" translatable="true">Card Title</string>
+    <string name="task_group_activity_dialog_add_card_detailed_description_hint_string" translatable="true">Detailed Description</string>
+    <string name="task_group_activity_dialog_add_card_add_card_button_string" translatable="true">Add Card</string>
+    <string name="task_group_activity_dialog_add_card_cancel_button_string" translatable="true">Cancel</string>
+
+    <!--
+         Task Group Activity Add Task List Dialog Strings
+    -->
+    <string name="task_group_activity_dialog_add_task_list_tag_string" translatable="true">add_task_list_tag</string>
+    <string name="task_group_activity_dialog_add_task_list_title_string" translatable="true">Add Task List</string>
+    <string name="task_group_activity_dialog_add_task_list_name_hint_string" translatable="true">Task List Name</string>
+    <string name="task_group_activity_dialog_add_task_list_add_button_string" translatable="true">Add</string>
+    <string name="task_group_activity_dialog_add_task_list_cancel_button_string" translatable="true">Cancel</string>
+
+    <!--
+         Task Group Activity Move Task List Dialog Strings
+    -->
+    <string name="task_group_activity_dialog_move_task_list_tag_string" translatable="true">move_task_list_tag</string>
+    <string name="task_group_activity_dialog_move_task_list_title_string" translatable="true">Move Task List</string>
+    <string name="task_group_activity_dialog_move_task_list_move_button_string" translatable="true">Move</string>
+    <string name="task_group_activity_dialog_move_task_list_cancel_button_string" translatable="true">Cancel</string>
+
+    <!--
          Card Detail Activity Strings
     -->
     <string name="card_detail_activity_detailed_description_hint_string" translatable="true">Add Detailed Description</string>
+
+    <!--
+         Keys
+    -->
+    <string name="choose_background_color_key">choose_background_color</string>
+    <string name="task_list_position_key">task_list_position</string>
+    <string name="task_list_spinner_selection_key">task_list_spinner_selection</string>
 
     <!--
          Tools resource strings
@@ -87,6 +129,8 @@
     <string name="tools_task_group_activity_task_list_item_completion_ratio_string" translatable="true">0/10</string>
 
     <string name="tools_task_group_activity_task_list_item_due_date_string" translatable="true">Nov 30</string>
+
+    <string name="tools_task_group_dialog_spinner_task_group_name_string" translatable="true">Task Group One</string>
 
     <string name="tools_card_detail_activity_due_date_string" translatable="true">Due, Monday, June 4, 2018 at 12:00 AM</string>
 
