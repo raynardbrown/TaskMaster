@@ -18,7 +18,7 @@ import com.example.android.taskmaster.databinding.DialogAddCardBinding;
 
 public class AddCardDialogFragment extends DialogFragment
 {
-  DialogAddCardBinding binding;
+  private DialogAddCardBinding binding;
   private IAddCardDialogListener listener;
   private int position;
 
