@@ -3,4 +3,19 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+
+    <!--
+         Shape and task colors
+    -->
+    <color name="task_red">#F44336</color>
+    <color name="task_dark_red">#D32F2F</color>
+    <color name="task_light_red">#ff5656</color>
+
+    <color name="task_green">#4CAF50</color>
+    <color name="task_dark_green">#388E3C</color>
+    <color name="task_light_green">#3dff46</color>
+
+    <color name="task_indigo">#3F51B5</color>
+    <color name="task_dark_indigo">#303F9F</color>
+    <color name="task_light_indigo">#0080ff</color>
 </resources>
