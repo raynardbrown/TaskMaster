@@ -2,6 +2,8 @@ package com.example.android.taskmaster.view;
 
 import android.content.Context;
 import android.databinding.DataBindingUtil;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
@@ -14,6 +16,9 @@ import android.view.ViewGroup;
 
 import com.example.android.taskmaster.R;
 import com.example.android.taskmaster.databinding.TaskMasterTaskListBinding;
+import com.example.android.taskmaster.view.dialog.AddCardDialogFragment;
+import com.example.android.taskmaster.view.dialog.AddTaskListDialogFragment;
+import com.example.android.taskmaster.view.dialog.MoveTaskListDialogFragment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +32,13 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
 
   private final static String TAG = TaskListAdapter.class.getSimpleName();
 
-  TaskListAdapter(List<String> taskListList)
+  private TaskListListAdapter adapter;
+
+  private AppCompatActivity activity;
+
+  TaskListAdapter(AppCompatActivity activity, List<String> taskListList)
   {
+    this.activity = activity;
     this.taskListList = taskListList;
   }
 
@@ -53,10 +63,13 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
 
     if(position == taskListList.size())
     {
-      // we are dealing with the add button
+      // we are dealing with the add task list button
       // hide the root task list and show the add task list button
       itemBinding.clTaskListRootContainer.setVisibility(View.GONE);
       itemBinding.clTaskAddTaskListButtonContainer.setVisibility(View.VISIBLE);
+
+      // set up click listener for the add task list button
+      itemBinding.buttonTaskListAddTaskList.setOnClickListener(new AddTaskListClickListener());
     }
     else
     {
@@ -68,8 +81,50 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
       itemBinding.tvTaskListTitle.setText(taskListList.get(position));
       itemBinding.imgButtonTaskListMenu.setOnClickListener(new TaskListMenuClickListener());
 
+      // set up click listener for the add card button
+      itemBinding.buttonTaskListAddCard.setOnClickListener(new TaskListAddCardClickListener(position));
+
       // TODO: Grab the cards
       setupItemRecyclerView(itemBinding, position);
+    }
+  }
+
+  class TaskListAddCardClickListener implements View.OnClickListener
+  {
+    /**
+     * The position of the task list within the adapter
+     */
+    private int position;
+
+    TaskListAddCardClickListener(int position)
+    {
+      this.position = position;
+    }
+
+    @Override
+    public void onClick(View v)
+    {
+      AddCardDialogFragment dialogFragment = new AddCardDialogFragment();
+
+      Bundle bundle = new Bundle();
+      bundle.putInt(activity.getString(R.string.task_list_position_key), position);
+
+      dialogFragment.setArguments(bundle);
+
+      dialogFragment.show(activity.getSupportFragmentManager(),
+              activity.getString(R.string.task_group_activity_dialog_add_card_tag_string));
+    }
+  }
+
+  class AddTaskListClickListener implements View.OnClickListener
+  {
+    @Override
+    public void onClick(View v)
+    {
+      AddTaskListDialogFragment dialogFragment = new AddTaskListDialogFragment();
+
+      dialogFragment.show(activity.getSupportFragmentManager(),
+              activity.getString(R.string.task_group_activity_dialog_add_task_list_tag_string));
     }
   }
 
@@ -95,7 +150,13 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
       {
         case R.id.action_move_task_list:
         {
-          // TODO: Handle click
+          MoveTaskListDialogFragment dialogFragment = new MoveTaskListDialogFragment();
+
+          // TODO: pass a list of task list spinner items as an argument to the fragment
+          // TODO: pass the index of the task list that requested the move as an argument to the fragment
+
+          dialogFragment.show(activity.getSupportFragmentManager(),
+                  activity.getString(R.string.task_group_activity_dialog_move_task_list_tag_string));
           return true;
         }
 
@@ -137,7 +198,7 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
     }
 
     // create the adapter
-    TaskListListAdapter adapter = new TaskListListAdapter(cardList);
+    adapter = new TaskListListAdapter(cardList);
     Log.i(TaskListAdapter.TAG, "Setting up the recycler adapter at position " + (position + 1));
 
     itemBinding.rvTaskList.setAdapter(adapter);
