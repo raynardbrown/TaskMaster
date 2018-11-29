@@ -107,6 +107,10 @@
          Card Detail Activity Strings
     -->
     <string name="card_detail_activity_detailed_description_hint_string" translatable="true">Add Detailed Description</string>
+    <string name="card_detail_activity_attachments_title_bar_title_string" translatable="true">Attachments</string>
+    <string name="card_detail_activity_menu_due_date_string" translatable="true">Due Date</string>
+    <string name="card_detail_activity_menu_checklist_string" translatable="true">Checklist</string>
+    <string name="card_detail_activity_menu_attachment_string" translatable="true">Attachment</string>
 
     <!--
          Keys
