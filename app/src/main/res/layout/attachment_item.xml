@@ -37,7 +37,7 @@
             android:layout_marginEnd="16dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
-            app:layout_constraintEnd_toStartOf="@+id/menu_button"
+            app:layout_constraintEnd_toStartOf="@+id/menu_button_attachment"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toEndOf="@+id/iv_attachment_icon"
             app:layout_constraintTop_toTopOf="parent"
@@ -56,7 +56,7 @@
             tools:text="@string/tools_card_detail_activity_attachment_time_string"/>
 
         <ImageButton
-            android:id="@+id/menu_button"
+            android:id="@+id/menu_button_attachment"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
