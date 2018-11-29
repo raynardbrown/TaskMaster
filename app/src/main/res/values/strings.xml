@@ -111,6 +111,8 @@
     <string name="card_detail_activity_menu_due_date_string" translatable="true">Due Date</string>
     <string name="card_detail_activity_menu_checklist_string" translatable="true">Checklist</string>
     <string name="card_detail_activity_menu_attachment_string" translatable="true">Attachment</string>
+    <string name="card_detail_activity_menu_checklist_default_name_string" translatable="true">Checklist</string>
+    <string name="card_detail_activity_menu_checklist_add_item_string" translatable="true">Add Item&#8230;</string>
 
     <!--
          Keys
@@ -137,6 +139,11 @@
     <string name="tools_task_group_dialog_spinner_task_group_name_string" translatable="true">Task Group One</string>
 
     <string name="tools_card_detail_activity_due_date_string" translatable="true">Due, Monday, June 4, 2018 at 12:00 AM</string>
+
+    <string name="tools_card_detail_activity_attachment_string" translatable="true">google.com</string>
+    <string name="tools_card_detail_activity_attachment_time_string" translatable="true">2 mins ago</string>
+
+    <string name="tools_card_detail_activity_checklist_item_name_string" translatable="true">Checklist item one</string>
 
     <string name="tools_long_sample_string" translatable="false">Lorem ipsum dolor sit amet, consectetur
         adipiscing elit. Etiam at justo finibus, porttitor nibh eget, ultricies turpis. Vivamus eget egestas
