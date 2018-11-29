@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_due_date"
+        android:title="@string/card_detail_activity_menu_due_date_string"/>
+    <item
+        android:id="@+id/action_checklist"
+        android:title="@string/card_detail_activity_menu_checklist_string"/>
+    <item
+        android:id="@+id/action_attachment"
+        android:title="@string/card_detail_activity_menu_attachment_string"/>
+</menu>
