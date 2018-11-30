@@ -10,11 +10,15 @@
 
     <!--
          This is an item in the checklist_item layout recycler view
+
+         Use the background color of the parent layout. Otherwise setting
+         the background here makes the background color appear darker if the
+         parent background color and the background color set here are the same.
     -->
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#0D000000">
+        >
 
         <!--
              This view is hidden if the check list item is the last item in the recycler view
