@@ -10,11 +10,14 @@
 
     <!--
          An item in the attachment recycler view
+
+         Use the background color of the parent layout. Otherwise setting
+         the background here makes the background color appear darker if the
+         parent background color and the background color set here are the same.
     -->
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#0D000000"
         >
 
         <ImageView
@@ -41,6 +44,9 @@
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toEndOf="@+id/iv_attachment_icon"
             app:layout_constraintTop_toTopOf="parent"
+            android:fontFamily="sans-serif"
+            android:textColor="#DD000000"
+            android:textSize="16sp"
             tools:text="@string/tools_card_detail_activity_attachment_string"/>
 
         <TextView
@@ -55,6 +61,11 @@
             app:layout_constraintVertical_bias="0.0"
             tools:text="@string/tools_card_detail_activity_attachment_time_string"/>
 
+        <!--
+             android:background="?android:attr/selectableItemBackground"
+
+             For transparent image button background
+        -->
         <ImageButton
             android:id="@+id/menu_button_attachment"
             android:layout_width="wrap_content"
@@ -64,6 +75,7 @@
             android:layout_marginRight="16dp"
             android:layout_marginTop="16dp"
             android:src="@drawable/ic_baseline_more_vert_24px"
+            android:background="?android:attr/selectableItemBackground"
             app:layout_constraintBottom_toBottomOf="@+id/tv_attachment_time"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
