@@ -12,4 +12,13 @@
         <item>Night</item>
         <item>Pick a time&#8230;</item>
     </string-array>
+
+    <!--
+         Values that map to the indexes in the time array
+    -->
+    <string-array name="due_date_spinner_time_array_values">
+        <item>9:00 AM</item>
+        <item>12:00 PM</item>
+        <item>8:00 PM</item>
+    </string-array>
 </resources>
