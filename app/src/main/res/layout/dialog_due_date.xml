@@ -12,60 +12,112 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <Spinner
-            android:id="@+id/spinner_task_group_dialog_due_date_date"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:layout_marginStart="24dp"
-            android:layout_marginLeft="24dp"
-            android:layout_marginEnd="0dp"
-            android:layout_marginRight="0dp"
-            android:layout_marginTop="16dp"
-            android:dropDownWidth="150dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/spinner_task_group_dialog_due_date_time"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintHorizontal_chainStyle="spread_inside"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
+        <!--
+             Main container for the due date dialog. This container contains the date spinners
+             and the delete button.
+        -->
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/cl_due_date_main_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-        <Spinner
-            android:id="@+id/spinner_task_group_dialog_due_date_time"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="0dp"
-            android:layout_marginLeft="0dp"
-            android:layout_marginEnd="0dp"
-            android:layout_marginRight="0dp"
-            android:dropDownWidth="150dp"
-            app:layout_constraintBottom_toBottomOf="@+id/spinner_task_group_dialog_due_date_date"
-            app:layout_constraintEnd_toStartOf="@+id/button_task_group_dialog_due_date_delete"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/spinner_task_group_dialog_due_date_date"
-            app:layout_constraintTop_toTopOf="@+id/spinner_task_group_dialog_due_date_date"/>
+            <Spinner
+                android:id="@+id/spinner_task_group_dialog_due_date_date"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginEnd="0dp"
+                android:layout_marginRight="0dp"
+                android:layout_marginTop="16dp"
+                android:dropDownWidth="150dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/spinner_task_group_dialog_due_date_time"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintHorizontal_chainStyle="spread_inside"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/>
+
+            <Spinner
+                android:id="@+id/spinner_task_group_dialog_due_date_time"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="0dp"
+                android:layout_marginLeft="0dp"
+                android:layout_marginEnd="0dp"
+                android:layout_marginRight="0dp"
+                android:dropDownWidth="150dp"
+                app:layout_constraintBottom_toBottomOf="@+id/spinner_task_group_dialog_due_date_date"
+                app:layout_constraintEnd_toStartOf="@+id/button_task_group_dialog_due_date_delete"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/spinner_task_group_dialog_due_date_date"
+                app:layout_constraintTop_toTopOf="@+id/spinner_task_group_dialog_due_date_date"/>
+
+            <!--
+                 android:background="?android:attr/selectableItemBackground"
+
+                 For transparent image button background
+            -->
+            <ImageButton
+                android:id="@+id/button_task_group_dialog_due_date_delete"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="0dp"
+                android:layout_marginLeft="0dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginRight="16dp"
+                app:layout_constraintBottom_toBottomOf="@+id/spinner_task_group_dialog_due_date_time"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/spinner_task_group_dialog_due_date_time"
+                app:layout_constraintTop_toTopOf="@+id/spinner_task_group_dialog_due_date_time"
+                android:background="?android:attr/selectableItemBackground"
+                android:src="@drawable/ic_baseline_close_24px"
+                tools:src="@drawable/ic_baseline_close_24px"/>
+        </android.support.constraint.ConstraintLayout>
 
         <!--
-             android:background="?android:attr/selectableItemBackground"
-
-             For transparent image button background
+             By default this container is not shown unless the delete button is pressed. If this
+             container is clicked then it is not shown and the main container is shown.
         -->
-        <ImageButton
-            android:id="@+id/button_task_group_dialog_due_date_delete"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="0dp"
-            android:layout_marginLeft="0dp"
-            android:layout_marginEnd="24dp"
-            android:layout_marginRight="24dp"
-            app:layout_constraintBottom_toBottomOf="@+id/spinner_task_group_dialog_due_date_time"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/spinner_task_group_dialog_due_date_time"
-            app:layout_constraintTop_toTopOf="@+id/spinner_task_group_dialog_due_date_time"
-            android:background="?android:attr/selectableItemBackground"
-            android:src="@drawable/ic_baseline_close_24px"
-            tools:src="@drawable/ic_baseline_close_24px"/>
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/cl_due_date_add_due_date_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/iv_due_date_add_due_date"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginBottom="16dp"
+                app:layout_constraintTop_toTopOf="@id/cl_due_date_add_due_date_container"
+                app:layout_constraintBottom_toBottomOf="@id/cl_due_date_add_due_date_container"
+                app:layout_constraintStart_toStartOf="@id/cl_due_date_add_due_date_container"
+                android:src="@drawable/ic_baseline_schedule_24px"
+                tools:src="@drawable/ic_baseline_schedule_24px"/>
+
+            <TextView
+                android:id="@+id/tv_due_date_add_due_date"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginLeft="16dp"
+                app:layout_constraintTop_toTopOf="@id/iv_due_date_add_due_date"
+                app:layout_constraintBottom_toBottomOf="@id/iv_due_date_add_due_date"
+                app:layout_constraintStart_toEndOf="@id/iv_due_date_add_due_date"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:fontFamily="sans-serif"
+                android:textColor="#DD000000"
+                android:textSize="20sp"
+                android:text="@string/card_detail_activity_dialog_due_date_add_due_date_string"
+                tools:text="@string/card_detail_activity_dialog_due_date_add_due_date_string"/>
+
+        </android.support.constraint.ConstraintLayout>
 
     </android.support.constraint.ConstraintLayout>
 </layout>
