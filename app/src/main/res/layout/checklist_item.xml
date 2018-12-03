@@ -13,79 +13,102 @@
     -->
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#FFFFFF">
+        android:layout_height="wrap_content">
 
-        <android.support.constraint.Guideline
-            android:id="@+id/guideline"
-            android:layout_width="wrap_content"
+        <!--
+             Checklist toolbar
+        -->
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/cl_checklist_toolbar"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintGuide_begin="64dp"/>
+            android:background="#FFFFFF">
 
-        <TextView
-            android:id="@+id/tv_checklist_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginTop="8dp"
-            android:fontFamily="sans-serif"
-            android:gravity="center_vertical"
-            android:textColor="#DD000000"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="@id/guideline"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="@string/card_detail_activity_menu_checklist_default_name_string"/>
+            <ImageView
+                android:id="@+id/iv_checklist_toolbar_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginLeft="16dp"
+                android:src="@drawable/ic_checkbox_marked_outline"
+                app:layout_constraintBottom_toBottomOf="@+id/et_checklist_name"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/et_checklist_name"
+                tools:src="@drawable/ic_checkbox_marked_outline"/>
 
-        <ImageButton
-            android:id="@+id/chevron_button_checklist"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:layout_marginRight="16dp"
-            android:background="?android:attr/selectableItemBackground"
-            android:src="@drawable/ic_baseline_expand_less_24px"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_checklist_name"
-            app:layout_constraintEnd_toStartOf="@+id/menu_button_checklist"
-            app:layout_constraintTop_toTopOf="@+id/tv_checklist_name"/>
+            <EditText
+                android:id="@+id/et_checklist_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="2dp"
+                android:fontFamily="sans-serif"
+                android:gravity="center_vertical"
+                android:textColor="#DD000000"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:inputType="text"
+                app:layout_constraintStart_toEndOf="@id/iv_checklist_toolbar_icon"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintVertical_bias="1.0"
+                tools:text="@string/card_detail_activity_menu_checklist_default_name_string"/>
 
-        <ImageButton
-            android:id="@+id/menu_button_checklist"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:layout_marginRight="16dp"
-            android:background="?android:attr/selectableItemBackground"
-            android:src="@drawable/ic_baseline_more_vert_24px"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_checklist_name"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/tv_checklist_name"/>
+            <ImageButton
+                android:id="@+id/chevron_button_checklist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:layout_marginRight="16dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:src="@drawable/ic_baseline_expand_less_24px"
+                app:layout_constraintBottom_toBottomOf="@+id/et_checklist_name"
+                app:layout_constraintEnd_toStartOf="@+id/menu_button_checklist"
+                app:layout_constraintTop_toTopOf="@+id/et_checklist_name"/>
 
-        <View
-            android:id="@+id/separator"
-            android:layout_width="wrap_content"
-            android:layout_height="3dp"
-            android:layout_marginTop="8dp"
-            android:background="#803F51B5"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_checklist_name"/>
+            <ImageButton
+                android:id="@+id/menu_button_checklist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:layout_marginRight="16dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:src="@drawable/ic_baseline_more_vert_24px"
+                app:layout_constraintBottom_toBottomOf="@+id/et_checklist_name"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/et_checklist_name"/>
+
+            <View
+                android:id="@+id/separator"
+                android:layout_width="wrap_content"
+                android:layout_height="3dp"
+                android:layout_marginTop="8dp"
+                android:background="#803F51B5"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/et_checklist_name"
+                app:layout_constraintBottom_toBottomOf="parent"/>
+
+        </android.support.constraint.ConstraintLayout>
 
         <!--
              Takes checklist drop down items
+
+             Use the background color of the parent layout. Otherwise setting
+             the background here makes the background color appear darker if the
+             parent background color and the background color set here are the same.
         -->
         <android.support.v7.widget.RecyclerView
             android:id="@+id/rv_checklist"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="#0D000000"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/separator"
+            app:layout_constraintTop_toBottomOf="@+id/cl_checklist_toolbar"
             app:layout_constraintVertical_bias="0.0"/>
 
     </android.support.constraint.ConstraintLayout>
