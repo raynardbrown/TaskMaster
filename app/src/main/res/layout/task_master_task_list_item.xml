@@ -54,6 +54,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/iv_task_list_item_card"
+                app:layout_constraintBottom_toTopOf="@id/cl_task_list_item_icon_row"
                 android:textSize="16sp"
                 android:fontFamily="sans-serif"
                 android:textColor="#A8000000"
@@ -61,8 +62,9 @@
 
             <!--
                  Row 3 - Optional row of views, in addition, each view in this row is optional
-            -->
 
+                 Default visibility is gone
+            -->
             <android.support.constraint.ConstraintLayout
                 android:id="@+id/cl_task_list_item_icon_row"
                 android:layout_width="0dp"
@@ -74,7 +76,9 @@
                 app:layout_constraintTop_toBottomOf="@id/tv_task_list_item_short_description"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent">
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:visibility="gone"
+                tools:visibility="visible">
 
                 <ImageView
                     android:id="@+id/iv_task_list_item_detailed_description"
@@ -88,7 +92,9 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     android:src="@drawable/ic_baseline_notes_24px"
-                    tools:src="@drawable/ic_baseline_notes_24px"/>
+                    tools:src="@drawable/ic_baseline_notes_24px"
+                    android:visibility="gone"
+                    tools:visibility="visible"/>
 
 
                 <ImageView
@@ -101,7 +107,9 @@
                     app:layout_constraintTop_toTopOf="@id/iv_task_list_item_detailed_description"
                     app:layout_constraintBottom_toBottomOf="@id/iv_task_list_item_detailed_description"
                     android:src="@drawable/ic_baseline_attachment_24px"
-                    tools:src="@drawable/ic_baseline_attachment_24px"/>
+                    tools:src="@drawable/ic_baseline_attachment_24px"
+                    android:visibility="gone"
+                    tools:visibility="visible"/>
 
                 <TextView
                     android:id="@+id/tv_task_list_item_attachment_count"
@@ -112,7 +120,9 @@
                     app:layout_constraintStart_toEndOf="@id/iv_task_list_item_attachment"
                     app:layout_constraintTop_toTopOf="@id/iv_task_list_item_attachment"
                     app:layout_constraintBottom_toBottomOf="@id/iv_task_list_item_attachment"
-                    tools:text="@string/tools_task_group_activity_task_list_item_attachment_count_string"/>
+                    tools:text="@string/tools_task_group_activity_task_list_item_attachment_count_string"
+                    android:visibility="gone"
+                    tools:visibility="visible"/>
 
                 <ImageView
                     android:id="@+id/iv_task_list_item_checklist"
@@ -124,7 +134,9 @@
                     app:layout_constraintTop_toTopOf="@id/tv_task_list_item_attachment_count"
                     app:layout_constraintBottom_toBottomOf="@id/tv_task_list_item_attachment_count"
                     android:src="@drawable/ic_outline_check_box_24px"
-                    tools:src="@drawable/ic_outline_check_box_24px"/>
+                    tools:src="@drawable/ic_outline_check_box_24px"
+                    android:visibility="gone"
+                    tools:visibility="visible"/>
 
                 <TextView
                     android:id="@+id/tv_task_list_item_checklist_completion_ratio"
@@ -135,7 +147,9 @@
                     app:layout_constraintStart_toEndOf="@id/iv_task_list_item_checklist"
                     app:layout_constraintTop_toTopOf="@id/iv_task_list_item_checklist"
                     app:layout_constraintBottom_toBottomOf="@id/iv_task_list_item_checklist"
-                    tools:text="@string/tools_task_group_activity_task_list_item_completion_ratio_string"/>
+                    tools:text="@string/tools_task_group_activity_task_list_item_completion_ratio_string"
+                    android:visibility="gone"
+                    tools:visibility="visible"/>
 
 
                 <ImageView
@@ -148,7 +162,9 @@
                     app:layout_constraintTop_toTopOf="@id/tv_task_list_item_checklist_completion_ratio"
                     app:layout_constraintBottom_toBottomOf="@id/tv_task_list_item_checklist_completion_ratio"
                     android:src="@drawable/ic_baseline_schedule_24px"
-                    tools:src="@drawable/ic_baseline_schedule_24px"/>
+                    tools:src="@drawable/ic_baseline_schedule_24px"
+                    android:visibility="gone"
+                    tools:visibility="visible"/>
 
                 <TextView
                     android:id="@+id/tv_task_list_item_due_date"
@@ -159,7 +175,9 @@
                     app:layout_constraintStart_toEndOf="@id/iv_task_list_item_due_date"
                     app:layout_constraintTop_toTopOf="@id/iv_task_list_item_due_date"
                     app:layout_constraintBottom_toBottomOf="@id/iv_task_list_item_due_date"
-                    tools:text="@string/tools_task_group_activity_task_list_item_due_date_string"/>
+                    tools:text="@string/tools_task_group_activity_task_list_item_due_date_string"
+                    android:visibility="gone"
+                    tools:visibility="visible"/>
 
             </android.support.constraint.ConstraintLayout>
 
