@@ -54,7 +54,8 @@
             tools:text="@string/tools_card_detail_activity_checklist_item_name_string"/>
 
         <!--
-             This view is hidden if the check list item is the last item in the recycler view
+             This view is hidden if the check list item is the last item in the recycler view. It
+             is also hidden for checklist items that do not have focus.
         -->
         <ImageButton
             android:id="@+id/menu_button_card_detail_activity_checklist_item_delete"
@@ -67,7 +68,8 @@
             android:src="@drawable/ic_baseline_delete_24px"
             app:layout_constraintBottom_toBottomOf="@+id/et_card_detail_activity_checklist_item_name"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent"
+            android:visibility="invisible"/>
 
     </android.support.constraint.ConstraintLayout>
 </layout>
