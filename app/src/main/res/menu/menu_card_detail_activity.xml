@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/action_due_date"
         android:title="@string/card_detail_activity_menu_due_date_string"/>
@@ -9,4 +10,11 @@
     <item
         android:id="@+id/action_attachment"
         android:title="@string/card_detail_activity_menu_attachment_string"/>
+
+    <item
+        android:id="@+id/action_edit_description_commit_menu_item"
+        android:title="@string/card_detail_activity_menu_edit_commit_string"
+        android:icon="@drawable/ic_baseline_done_24px"
+        android:visible="false"
+        app:showAsAction="ifRoom"/>
 </menu>
