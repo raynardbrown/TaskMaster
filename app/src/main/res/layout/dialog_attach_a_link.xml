@@ -13,7 +13,7 @@
         android:layout_height="match_parent">
 
         <EditText
-            android:id="@+id/tv_attach_link"
+            android:id="@+id/et_attach_link"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
@@ -24,22 +24,22 @@
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            android:text="@string/card_detail_activity_dialog_attach_a_link_link_hint_string"
-            tools:text="@string/card_detail_activity_dialog_attach_a_link_link_hint_string"/>
+            android:hint="@string/card_detail_activity_dialog_attach_a_link_link_hint_string"
+            tools:hint="@string/card_detail_activity_dialog_attach_a_link_link_hint_string"/>
 
         <EditText
-            android:id="@+id/tv_attach_link_optional"
+            android:id="@+id/et_attach_link_optional"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:layout_marginTop="16dp"
             android:inputType="textUri"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="@+id/tv_attach_link"
-            app:layout_constraintStart_toStartOf="@+id/tv_attach_link"
-            app:layout_constraintTop_toBottomOf="@+id/tv_attach_link"
+            app:layout_constraintEnd_toEndOf="@+id/et_attach_link"
+            app:layout_constraintStart_toStartOf="@+id/et_attach_link"
+            app:layout_constraintTop_toBottomOf="@+id/et_attach_link"
             app:layout_constraintVertical_bias="0.0"
-            android:text="@string/card_detail_activity_dialog_attach_a_link_optional_link_name_hint_string"
-            tools:text="@string/card_detail_activity_dialog_attach_a_link_optional_link_name_hint_string"/>
+            android:hint="@string/card_detail_activity_dialog_attach_a_link_optional_link_name_hint_string"
+            tools:hint="@string/card_detail_activity_dialog_attach_a_link_optional_link_name_hint_string"/>
     </android.support.constraint.ConstraintLayout>
 </layout>
