@@ -1,5 +1,6 @@
 package com.example.android.taskmaster.view;
 
+import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.support.v4.app.DialogFragment;
@@ -30,6 +31,11 @@ public class LogInActivity extends AppCompatActivity implements IForgotPasswordD
    * Check if the password field is empty per the text change listener
    */
   private boolean passwordFieldEmpty;
+
+  public static Intent getStartIntent(Context context)
+  {
+    return new Intent(context, LogInActivity.class);
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState)
