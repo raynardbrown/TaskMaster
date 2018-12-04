@@ -1,5 +1,6 @@
 package com.example.android.taskmaster.view;
 
+import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.support.v7.app.AppCompatActivity;
@@ -12,6 +13,11 @@ import com.example.android.taskmaster.databinding.ActivityWelcomeBinding;
 public class WelcomeActivity extends AppCompatActivity
 {
   private ActivityWelcomeBinding binding;
+
+  public static Intent getStartIntent(Context context)
+  {
+    return new Intent(context, WelcomeActivity.class);
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState)
@@ -33,7 +39,7 @@ public class WelcomeActivity extends AppCompatActivity
     @Override
     public void onClick(View v)
     {
-      Intent intent = new Intent(WelcomeActivity.this, LogInActivity.class);
+      Intent intent = LogInActivity.getStartIntent(WelcomeActivity.this);
 
       startActivity(intent);
     }
@@ -41,11 +47,10 @@ public class WelcomeActivity extends AppCompatActivity
 
   class SignUpButtonClickHandler implements View.OnClickListener
   {
-
     @Override
     public void onClick(View v)
     {
-      Intent intent = new Intent(WelcomeActivity.this, SignUpActivity.class);
+      Intent intent = SignUpActivity.getStartIntent(WelcomeActivity.this);
 
       startActivity(intent);
     }
