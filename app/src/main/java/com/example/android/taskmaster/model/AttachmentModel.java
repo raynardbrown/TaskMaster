@@ -3,19 +3,22 @@ package com.example.android.taskmaster.model;
 public class AttachmentModel
 {
   private String cardId;
-  private String attachmentPath;
+  private String attachmentData;
   private int attachmentIndex;
   private long attachmentTime;
+  private int attachmentType;
 
   public AttachmentModel(String cardId,
-                         String attachmentPath,
+                         String attachmentData,
                          int attachmentIndex,
-                         long attachmentTime)
+                         long attachmentTime,
+                         int attachmentType)
   {
     this.cardId = cardId;
-    this.attachmentPath = attachmentPath;
+    this.attachmentData = attachmentData;
     this.attachmentIndex = attachmentIndex;
     this.attachmentTime = attachmentTime;
+    this.attachmentType = attachmentType;
   }
 
   public String getCardId()
@@ -28,14 +31,14 @@ public class AttachmentModel
     this.cardId = cardId;
   }
 
-  public String getAttachmentPath()
+  public String getAttachmentData()
   {
-    return attachmentPath;
+    return attachmentData;
   }
 
-  public void setAttachmentPath(String attachmentPath)
+  public void setAttachmentData(String attachmentData)
   {
-    this.attachmentPath = attachmentPath;
+    this.attachmentData = attachmentData;
   }
 
   public int getAttachmentIndex()
@@ -56,5 +59,15 @@ public class AttachmentModel
   public void setAttachmentTime(long attachmentTime)
   {
     this.attachmentTime = attachmentTime;
+  }
+
+  public int getAttachmentType()
+  {
+    return attachmentType;
+  }
+
+  public void setAttachmentType(int attachmentType)
+  {
+    this.attachmentType = attachmentType;
   }
 }
