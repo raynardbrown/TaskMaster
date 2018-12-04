@@ -1,5 +1,7 @@
 package com.example.android.taskmaster.view;
 
+import android.content.Context;
+import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -35,6 +37,11 @@ public class SignUpActivity extends AppCompatActivity
    * Check if the password field is empty per the text change listener
    */
   private boolean passwordFieldEmpty;
+
+  public static Intent getStartIntent(Context context)
+  {
+    return new Intent(context, SignUpActivity.class);
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState)
