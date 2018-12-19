@@ -54,7 +54,6 @@
     <!--
         Main Activity Create Group Dialog Strings
     -->
-    <string name="main_activity_dialog_create_group_tag_string" translatable="true">create_group_tag</string>
     <string name="main_activity_dialog_create_group_title_string" translatable="true">Create Group</string>
     <string name="main_activity_dialog_create_group_group_name_hint_string" translatable="true">Group Name</string>
     <string name="main_activity_dialog_create_group_create_button_string" translatable="true">Create</string>
@@ -98,7 +97,6 @@
     <!--
          Task Group Activity Move Task List Dialog Strings
     -->
-    <string name="task_group_activity_dialog_move_task_list_tag_string" translatable="true">move_task_list_tag</string>
     <string name="task_group_activity_dialog_move_task_list_title_string" translatable="true">Move Task List</string>
     <string name="task_group_activity_dialog_move_task_list_move_button_string" translatable="true">Move</string>
     <string name="task_group_activity_dialog_move_task_list_cancel_button_string" translatable="true">Cancel</string>
@@ -113,13 +111,84 @@
     <string name="card_detail_activity_menu_attachment_string" translatable="true">Attachment</string>
     <string name="card_detail_activity_menu_checklist_default_name_string" translatable="true">Checklist</string>
     <string name="card_detail_activity_menu_checklist_add_item_string" translatable="true">Add Item&#8230;</string>
+    <string name="card_detail_activity_menu_edit_commit_string" translatable="true">Commit Edit</string>
+    <string name="card_detail_activity_menu_checklist_delete_string" translatable="true">Delete&#8230;</string>
+    <string name="card_detail_activity_attachment_time_format_string" translatable="true">%1$s at %2$s</string>
+    <string name="card_detail_activity_toolbar_location_format_string" translatable="true">Task Group in task list %1$s</string>
+    <string name="card_detail_activity_edit_check_list_string" translatable="true">Edit Checklist</string>
+    <string name="card_detail_activity_add_check_list_item_string" translatable="true">Add Item&#8230;</string>
+    <string name="card_detail_activity_new_check_list_item_string" translatable="true">New Checklist Item</string>
+    <string name="card_detail_activity_edit_check_list_item_string" translatable="true">Edit Checklist Item</string>
+    <string name="card_detail_activity_edit_description_title_string" translatable="true">Edit Description</string>
+    <string name="card_detail_activity_default_checklist_name_string" translatable="true">Checklist</string>
+    <string name="card_detail_activity_not_due_time_format_string" translatable="true">Due %1$s at %2$s</string>
+    <string name="card_detail_activity_past_due_time_format_string" translatable="true">Was due %1$s at %2$s</string>
+
+    <!--
+         Card Detail Activity Due Date Dialog Strings
+    -->
+    <string name="card_detail_activity_dialog_due_date_title_string" translatable="true">Due Date</string>
+    <string name="card_detail_activity_dialog_due_date_done_button_string" translatable="true">Done</string>
+    <string name="card_detail_activity_dialog_due_date_cancel_button_string" translatable="true">Cancel</string>
+    <string name="card_detail_activity_dialog_due_date_add_due_date_string" translatable="true">Add due date&#8230;</string>
+    <string name="card_detail_activity_dialog_due_date_date_picker_title_string" translatable="true">Select date</string>
+    <string name="card_detail_activity_dialog_due_date_time_picker_title_string" translatable="true">Select time</string>
+
+    <!--
+         Card Detail Activity Delete Checklist Dialog Strings
+    -->
+    <string name="card_detail_activity_dialog_delete_checklist_tag_string" translatable="true">delete_checklist_tag</string>
+    <string name="card_detail_activity_dialog_delete_checklist_title_string" translatable="true">Delete Checklist</string>
+    <string name="card_detail_activity_dialog_delete_checklist_delete_button_string" translatable="true">Delete</string>
+    <string name="card_detail_activity_dialog_delete_checklist_cancel_button_string" translatable="true">Cancel</string>
+    <string name="card_detail_activity_dialog_delete_checklist_warning_message_string" translatable="true">Are you sure you want to delete this checklist?</string>
+
+    <!--
+         Card Detail Activity Attachment Type Chooser Dialog Strings
+    -->
+    <string name="card_detail_activity_dialog_attach_type_chooser_tag_string" translatable="true">attachment_type_chooser_tag</string>
+    <string name="card_detail_activity_dialog_attach_type_chooser_title_string" translatable="true">Attach from&#8230;</string>
+    <string name="card_detail_activity_dialog_attach_type_chooser_file_type_string" translatable="true">File</string>
+    <string name="card_detail_activity_dialog_attach_type_chooser_link_type_string" translatable="true">Attach a link</string>
+    <string name="card_detail_activity_dialog_attach_type_chooser_image_mime_type_string" translatable="true">image/*</string>
+    <string name="card_detail_activity_dialog_attach_type_chooser_image_picker_title_string" translatable="true">Choose image&#8230;</string>
+
+    <!--
+     Card Detail Activity Attach A Link Dialog Strings
+    -->
+    <string name="card_detail_activity_dialog_attach_a_link_tag_string" translatable="true">attach_a_link_tag</string>
+    <string name="card_detail_activity_dialog_attach_a_link_title_string" translatable="true">Attach a link</string>
+    <string name="card_detail_activity_dialog_attach_a_link_cancel_button_string" translatable="true">Cancel</string>
+    <string name="card_detail_activity_dialog_attach_a_link_ok_button_string" translatable="true">OK</string>
+    <string name="card_detail_activity_dialog_attach_a_link_link_hint_string" translatable="true">Link here&#8230;</string>
+    <string name="card_detail_activity_dialog_attach_a_link_optional_link_name_hint_string" translatable="true">Link name (optional)</string>
+
+    <!--
+         Date/Time format strings
+    -->
+    <string name="date_time_format_day_of_week_full_month_name_day_year_string" translatable="false">EEEE, MMMM dd, yyyy</string>
+    <string name="date_time_format_hour_with_leading_zero_minute_period_string" translatable="false">hh:mm a</string>
+    <string name="date_time_format_full_month_name_day_year_hour_with_leading_zero_minute_period_string" translatable="false">MMMM dd, yyyy hh:mm a</string>
+    <string name="date_time_format_abbreviated_month_name_day_year_string" translatable="false">MMM dd, yyyy</string>
+    <string name="date_time_format_hour_without_leading_zero_minute_period_string" translatable="false">h:mm a</string>
 
     <!--
          Keys
     -->
     <string name="choose_background_color_key">choose_background_color</string>
     <string name="task_list_position_key">task_list_position</string>
-    <string name="task_list_spinner_selection_key">task_list_spinner_selection</string>
+    <string name="move_task_list_task_group_list_key">move_task_list_task_group_list</string>
+    <string name="move_task_list_task_group_selection_index_key">move_task_list_task_group_selection_index</string>
+    <string name="move_task_list_task_list_index_key">move_task_list_task_list_index</string>
+    <string name="check_list_position_key">check_list_position</string>
+    <string name="task_group_list_key">task_group_list</string>
+    <string name="task_group_model_object_key">task_group_model_object</string>
+    <string name="task_group_model_object_list_key">task_group_model_object_list</string>
+    <string name="task_list_card_model_object_key">task_list_card_model_object</string>
+    <string name="task_list_model_container_object_list_key">task_list_model_container_object_list</string>
+    <string name="task_list_title_key">task_list_title</string>
+    <string name="due_date_key">due_date</string>
+    <string name="due_date_current_drawable_color_key">due_date_current_drawable_color</string>
 
     <!--
          Tools resource strings
@@ -138,12 +207,14 @@
 
     <string name="tools_task_group_dialog_spinner_task_group_name_string" translatable="true">Task Group One</string>
 
-    <string name="tools_card_detail_activity_due_date_string" translatable="true">Due, Monday, June 4, 2018 at 12:00 AM</string>
+    <string name="tools_card_detail_activity_due_date_string" translatable="true">Due, Monday, June 4, 2018 at 12:00 AM, Blah, Blah, Blah, Blah</string>
 
     <string name="tools_card_detail_activity_attachment_string" translatable="true">google.com</string>
     <string name="tools_card_detail_activity_attachment_time_string" translatable="true">2 mins ago</string>
 
     <string name="tools_card_detail_activity_checklist_item_name_string" translatable="true">Checklist item one</string>
+
+    <string name="tools_card_detail_activity_due_date_spinner_item_name_string" translatable="true">Spinner Item</string>
 
     <string name="tools_long_sample_string" translatable="false">Lorem ipsum dolor sit amet, consectetur
         adipiscing elit. Etiam at justo finibus, porttitor nibh eget, ultricies turpis. Vivamus eget egestas
