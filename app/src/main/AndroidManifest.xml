@@ -13,7 +13,8 @@
 
         <!-- Main Activity -->
         <activity
-            android:name=".view.WelcomeActivity">
+            android:name=".view.WelcomeActivity"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action
                     android:name="android.intent.action.MAIN"/>
@@ -26,6 +27,7 @@
         <!-- Child of WelcomeActivity -->
         <activity
             android:name=".view.SignUpActivity"
+            android:launchMode="singleTop"
             android:parentActivityName=".view.WelcomeActivity">
 
             <meta-data
@@ -36,6 +38,7 @@
         <!-- Child of WelcomeActivity -->
         <activity
             android:name=".view.LogInActivity"
+            android:launchMode="singleTop"
             android:parentActivityName=".view.WelcomeActivity">
 
             <meta-data
@@ -43,11 +46,31 @@
                 android:value=".view.WelcomeActivity"/>
         </activity>
 
-        <activity android:name=".view.MainActivity">
+        <activity
+            android:name=".view.MainActivity"
+            android:launchMode="singleTop">
         </activity>
-        <activity android:name=".view.TaskGroupActivity">
+
+        <!-- Child of MainActivity -->
+        <activity
+            android:name=".view.TaskGroupActivity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".view.MainActivity">
+
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".view.MainActivity"/>
         </activity>
-        <activity android:name=".view.CardDetailActivity">
+
+        <!-- Child of TaskGroupActivity -->
+        <activity
+            android:name=".view.CardDetailActivity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".view.TaskGroupActivity">
+
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".view.TaskGroupActivity"/>
         </activity>
     </application>
 
