@@ -11,11 +11,19 @@
     <color name="task_dark_red">#D32F2F</color>
     <color name="task_light_red">#ff5656</color>
 
-    <color name="task_green">#4CAF50</color>
-    <color name="task_dark_green">#388E3C</color>
-    <color name="task_light_green">#3dff46</color>
+    <color name="task_green">#009f07</color>
+    <color name="task_dark_green">#006405</color>
+    <color name="task_light_green">#00da0a</color>
 
     <color name="task_indigo">#3F51B5</color>
     <color name="task_dark_indigo">#303F9F</color>
     <color name="task_light_indigo">#0080ff</color>
+
+    <!--
+         Due date colors
+    -->
+    <color name="due_date_past">#FFFF0000</color>
+    <color name="due_date_sooner">#FFFFA500</color>
+    <color name="due_date_soon">#FF808080</color>
+    <color name="due_date_completed">#FF00CC00</color>
 </resources>
