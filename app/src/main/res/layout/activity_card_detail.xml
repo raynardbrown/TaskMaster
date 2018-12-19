@@ -25,12 +25,20 @@
             android:background="?colorPrimary"
             android:fitsSystemWindows="true">
 
+            <!--
+                 Set the scrimAnimationDuration to 50 milliseconds so that there is a shorter
+                 window when the toolbar is pinned and showing the title and the edit text title
+                 is collapsed. We need a short duration so that the two titles do not appear on
+                 top of one another as the tool bar is collapsed.
+                 app:scrimAnimationDuration="50"
+            -->
             <android.support.design.widget.CollapsingToolbarLayout
                 android:id="@+id/collapsing_toolbar_layout_card_detail"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:fitsSystemWindows="true"
                 app:collapsedTitleTextAppearance="@style/TextAppearance.AppCompat.Widget.ActionBar.Title.Inverse"
+                app:scrimAnimationDuration="50"
                 app:contentScrim="?attr/colorPrimary"
                 app:expandedTitleMarginEnd="64dp"
                 app:expandedTitleMarginStart="48dp"
@@ -49,12 +57,52 @@
                     />
 
                 <!--
-                     TODO: Card name goes here
+                     Only visible when we have an image in the toolbar
                 -->
+                <View
+                    android:id="@+id/view_toolbar_scrim"
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp"
+                    android:background="@drawable/toolbar_image_scrim"
+                    android:visibility="gone"/>
 
                 <!--
-                     TODO: Card location goes here
+                    Note: the background shall be the color of the image palette or the not set
+                          to use the default toolbar background
                 -->
+                <LinearLayout
+                    android:id="@+id/meta_bar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
+                    android:paddingStart="48dp"
+                    android:paddingEnd="48dp"
+                    android:paddingBottom="8dp"
+                    android:orientation="vertical">
+
+                    <EditText
+                        android:id="@+id/et_toolbar_card_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:lineSpacingMultiplier="0.9"
+                        android:inputType="text"
+                        android:textColor="#FFFFFFFF"
+                        android:fontFamily="sans-serif"
+                        android:textStyle="bold"
+                        android:textSize="20sp"
+                        tools:text="Task Master"
+                        />
+
+                    <TextView
+                        android:id="@+id/tv_toolbar_card_location_details"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#FFFFFFFF"
+                        android:fontFamily="sans-serif"
+                        android:textStyle="italic"
+                        tools:text="Task Group in Task List"/>
+
+                </LinearLayout>
 
                 <android.support.v7.widget.Toolbar
                     android:id="@+id/tb_card_detail_activity"
@@ -90,7 +138,6 @@
                     android:layout_marginEnd="16dp"
                     android:layout_marginStart="16dp"
                     android:layout_marginTop="16dp"
-                    android:enabled="false"
                     android:hint="@string/card_detail_activity_detailed_description_hint_string"
                     android:inputType="textMultiLine"
                     tools:text="@string/tools_long_sample_string"/>
@@ -111,23 +158,30 @@
                         android:layout_alignParentLeft="true"
                         android:layout_alignParentStart="true"
                         android:layout_marginBottom="8dp"
-                        android:layout_marginEnd="16dp"
+                        android:layout_marginEnd="0dp"
+                        android:layout_marginRight="0dp"
                         android:layout_marginStart="16dp"
+                        android:layout_marginLeft="16dp"
                         android:layout_marginTop="8dp"
                         android:src="@drawable/ic_baseline_schedule_24px"/>
 
                     <TextView
                         android:id="@+id/tv_card_detail_activity_due_date"
                         android:layout_width="wrap_content"
-                        android:layout_height="24dp"
-                        android:layout_centerInParent="true"
+                        android:layout_height="wrap_content"
+                        android:layout_toRightOf="@id/iv_card_detail_activity_due_date"
+                        android:layout_toEndOf="@id/iv_card_detail_activity_due_date"
+                        android:layout_toLeftOf="@id/cb_card_detail_activity_due_date"
+                        android:layout_toStartOf="@id/cb_card_detail_activity_due_date"
                         android:layout_marginBottom="8dp"
                         android:layout_marginEnd="16dp"
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="8dp"
                         android:gravity="center_vertical"
+                        android:fontFamily="sans-serif"
+                        android:textColor="#DD000000"
+                        android:textSize="14sp"
                         tools:text="@string/tools_card_detail_activity_due_date_string"/>
-
 
                     <CheckBox
                         android:id="@+id/cb_card_detail_activity_due_date"
@@ -137,7 +191,9 @@
                         android:layout_alignParentRight="true"
                         android:layout_marginBottom="8dp"
                         android:layout_marginEnd="16dp"
-                        android:layout_marginStart="16dp"
+                        android:layout_marginRight="16dp"
+                        android:layout_marginStart="0dp"
+                        android:layout_marginLeft="0dp"
                         android:layout_marginTop="8dp"
                         />
 
@@ -162,7 +218,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="0dp"
                     android:layout_marginTop="0dp"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:visibility="gone">
 
                     <!--
                          Attachment title bar
@@ -206,11 +263,16 @@
 
                     </RelativeLayout>
 
+                    <!--
+                         Use the background color of the parent layout. Otherwise setting
+                         the background here makes the background color appear darker if the
+                         parent background color and the background color set here are the same.
+                    -->
                     <android.support.v7.widget.RecyclerView
                         android:id="@+id/rv_card_detail_activity_attachment_attachments"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="#0D000000">
+                        >
 
                     </android.support.v7.widget.RecyclerView>
 
