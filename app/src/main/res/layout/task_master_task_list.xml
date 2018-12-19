@@ -110,6 +110,7 @@
             app:layout_constrainedWidth="false"
             app:layout_constraintBottom_toTopOf="@id/button_task_list_add_card"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight_min="36dp"
             app:layout_constraintHeight_max="500dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/cl_task_list_title_bar"/>
