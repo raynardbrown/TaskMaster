@@ -1,7 +1,9 @@
 package com.example.android.taskmaster.view;
 
+import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
+import android.os.Parcelable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,24 +15,45 @@ import android.view.View;
 
 import com.example.android.taskmaster.R;
 import com.example.android.taskmaster.databinding.ActivityMainBinding;
+import com.example.android.taskmaster.model.TaskGroupModel;
+import com.example.android.taskmaster.utils.TaskMasterConstants;
 import com.example.android.taskmaster.view.dialog.CreateGroupDialogFragment;
 import com.example.android.taskmaster.view.dialog.ICreateGroupDialogListener;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements ITaskGroupListItemClickListener,
                                                                ICreateGroupDialogListener
 {
   private ActivityMainBinding binding;
-  private List<String> taskGroupList;
+  private List<TaskGroupModel> taskGroupList;
   private TaskGroupListAdapter adapter;
+
+  public static Intent getStartIntent(Context context)
+  {
+    return new Intent(context, MainActivity.class);
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState)
   {
     super.onCreate(savedInstanceState);
     binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+
+    if(savedInstanceState == null)
+    {
+      taskGroupList = new ArrayList<>();
+
+      fetchRemoteData();
+    }
+    else
+    {
+      taskGroupList = savedInstanceState.getParcelableArrayList(getString(R.string.task_group_list_key));
+    }
 
     // set up the toolbar
     setSupportActionBar(binding.tbMainActivity);
@@ -42,7 +65,19 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
     }
 
     registerClickHandler();
+
     setupRecyclerView();
+
+    refreshRecyclerViewVisibilityState();
+  }
+
+  @Override
+  protected void onSaveInstanceState(Bundle outState)
+  {
+    super.onSaveInstanceState(outState);
+
+    outState.putParcelableArrayList(getString(R.string.task_group_list_key),
+            new ArrayList<Parcelable>(taskGroupList));
   }
 
   @Override
@@ -60,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
     {
       case R.id.action_log_out:
       {
-        // TODO: Handle click
+        logoutHandler();
         return true;
       }
 
@@ -80,24 +115,31 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
   {
     LinearLayoutManager layoutManager = new LinearLayoutManager(this);
     binding.rvMainActivity.setLayoutManager(layoutManager);
-    taskGroupList = new ArrayList<>();
-
-    // TODO: Dummy data delete this
-    taskGroupList.add("Task Group One");
-    taskGroupList.add("Task Group Two");
-    taskGroupList.add("Task Group Three");
-    taskGroupList.add("Task Group Four");
 
     adapter = new TaskGroupListAdapter(taskGroupList, this);
     binding.rvMainActivity.setAdapter(adapter);
   }
 
+  private void refreshRecyclerViewVisibilityState()
+  {
+    if(taskGroupList.isEmpty())
+    {
+      binding.rvMainActivity.setVisibility(View.INVISIBLE);
+      binding.tvErrorMainActivityNoTaskGroups.setVisibility(View.VISIBLE);
+    }
+    else
+    {
+      binding.tvErrorMainActivityNoTaskGroups.setVisibility(View.INVISIBLE);
+      binding.rvMainActivity.setVisibility(View.VISIBLE);
+    }
+  }
+
   @Override
   public void onTaskGroupListItemClick(int index)
   {
-    // TODO: launch the task group activity for testing, we really need to use the database to
-    //       pass extra data via the intent
-    Intent intent = new Intent(this, TaskGroupActivity.class);
+    Intent intent = TaskGroupActivity.getStartIntent(this,
+            taskGroupList.get(index),
+            taskGroupList);
 
     startActivity(intent);
   }
@@ -105,7 +147,29 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
   @Override
   public void onCreateGroupClick(String newGroupName)
   {
-    // TODO: Actually create the group
+    TaskGroupModel taskGroupModel = new TaskGroupModel(UUID.randomUUID().toString(),
+            newGroupName,
+            TaskMasterConstants.DEFAULT_BACKGROUND);
+
+    taskGroupList.add(taskGroupModel);
+
+    // The list must be displayed sorted by task name
+    Collections.sort(taskGroupList, new SortByTaskName());
+
+    // TODO: Add the new task group to the database too
+
+    // Refresh the recycler view
+    adapter.notifyDataSetChanged();
+
+    refreshRecyclerViewVisibilityState();
+  }
+
+  class SortByTaskName implements Comparator<TaskGroupModel>
+  {
+    public int compare(TaskGroupModel a, TaskGroupModel b)
+    {
+      return a.getTitle().compareTo(b.getTitle());
+    }
   }
 
   class CreateGroupFabClickHandler implements View.OnClickListener
@@ -114,9 +178,19 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
     public void onClick(View v)
     {
       // Show the create group dialog
-      CreateGroupDialogFragment dialogFragment = new CreateGroupDialogFragment();
-      dialogFragment.show(getSupportFragmentManager(),
-              getString(R.string.main_activity_dialog_create_group_tag_string));
+      CreateGroupDialogFragment.newInstance().show(getSupportFragmentManager());
     }
+  }
+
+  private void fetchRemoteData()
+  {
+    // TODO: Grab the task groups from the database
+
+    // TODO: Refresh the recycler view visibility state too
+  }
+
+  private void logoutHandler()
+  {
+    // TODO: Actually log out
   }
 }
