@@ -8,9 +8,8 @@ import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentManager;
 import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.AdapterView;
 
 import com.example.android.taskmaster.R;
 import com.example.android.taskmaster.databinding.DialogMoveTaskListBinding;
@@ -20,9 +19,37 @@ import java.util.List;
 
 public class MoveTaskListDialogFragment extends DialogFragment
 {
+  private static final String DIALOG_FRAGMENT_TAG = "move_task_list_tag";
+
   private DialogMoveTaskListBinding binding;
+
   private IMoveTaskListDialogListener listener;
-  private int currentSelection;
+
+  private List<TaskGroupSpinnerItem> taskGroupSpinnerItemList;
+
+  private int currentTaskGroup;
+
+  private int taskListIndex;
+
+  public static MoveTaskListDialogFragment newInstance(Context context,
+                                                       List<TaskGroupSpinnerItem> taskGroupSpinnerItemList,
+                                                       int currentTaskGroup,
+                                                       int taskListIndex)
+  {
+    MoveTaskListDialogFragment fragment = new MoveTaskListDialogFragment();
+    Bundle bundle = new Bundle();
+
+    bundle.putParcelableArrayList(context.getString(R.string.move_task_list_task_group_list_key),
+            new ArrayList<>(taskGroupSpinnerItemList));
+
+    bundle.putInt(context.getString(R.string.move_task_list_task_group_selection_index_key),
+            currentTaskGroup);
+
+    bundle.putInt(context.getString(R.string.move_task_list_task_list_index_key), taskListIndex);
+
+    fragment.setArguments(bundle);
+    return fragment;
+  }
 
   @Override
   public void onAttach(Context context)
@@ -43,10 +70,14 @@ public class MoveTaskListDialogFragment extends DialogFragment
   @Override
   public Dialog onCreateDialog(Bundle savedInstanceState)
   {
-    if(getArguments() != null)
+    Bundle bundle = getArguments();
+    if(bundle != null)
     {
-      // TODO: also grab a list of task spinner items
-      currentSelection = getArguments().getInt(getString(R.string.task_list_spinner_selection_key));
+      taskGroupSpinnerItemList = bundle.getParcelableArrayList(getString(R.string.move_task_list_task_group_list_key));
+
+      currentTaskGroup = bundle.getInt(getString(R.string.move_task_list_task_group_selection_index_key));
+
+      taskListIndex = bundle.getInt(getString(R.string.move_task_list_task_list_index_key));
     }
 
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
@@ -63,7 +94,9 @@ public class MoveTaskListDialogFragment extends DialogFragment
               @Override
               public void onClick(DialogInterface dialog, int which)
               {
-                listener.onTaskListMoveClick(binding.spinnerTaskGroupDialogMoveTaskList.getSelectedItem().toString());
+                listener.onTaskListMoveClick(taskListIndex,
+                        currentTaskGroup,
+                        binding.spinnerTaskGroupDialogMoveTaskList.getSelectedItemPosition());
               }
             })
             .setNegativeButton(R.string.task_group_activity_dialog_move_task_list_cancel_button_string, new DialogInterface.OnClickListener()
@@ -75,46 +108,23 @@ public class MoveTaskListDialogFragment extends DialogFragment
               }
             });
 
-    // TODO: Do I really need this? I already call getSelectedItem in onClick
-    setupSelectionListener();
-
     return builder.create();
   }
 
   private void setupUi()
   {
-    // TODO: Dummy items, actually get these values via fragment arguments
-    List<TaskListSpinnerItem> listSpinnerItems = new ArrayList<>();
-    listSpinnerItems.add(new TaskListSpinnerItem("Task Group One", 1));
-    listSpinnerItems.add(new TaskListSpinnerItem("Task Group Two", 2));
-    listSpinnerItems.add(new TaskListSpinnerItem("Task Group Three", 3));
-
-    TaskListSpinnerItemAdapter adapter = new TaskListSpinnerItemAdapter(getContext(),
+    TaskGroupSpinnerItemAdapter adapter = new TaskGroupSpinnerItemAdapter(getContext(),
             R.layout.task_group_spinner_item,
             R.id.tv_task_group_spinner_item,
-            listSpinnerItems);
+            taskGroupSpinnerItemList);
 
     binding.spinnerTaskGroupDialogMoveTaskList.setAdapter(adapter);
+
+    binding.spinnerTaskGroupDialogMoveTaskList.setSelection(currentTaskGroup);
   }
 
-  private void setupSelectionListener()
+  public void show(FragmentManager fragmentManager)
   {
-    binding.spinnerTaskGroupDialogMoveTaskList.setOnItemSelectedListener(new TaskListSelectionListener());
-  }
-
-  class TaskListSelectionListener implements AdapterView.OnItemSelectedListener
-  {
-
-    @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id)
-    {
-
-    }
-
-    @Override
-    public void onNothingSelected(AdapterView<?> parent)
-    {
-
-    }
+    super.show(fragmentManager, MoveTaskListDialogFragment.DIALOG_FRAGMENT_TAG);
   }
 }
