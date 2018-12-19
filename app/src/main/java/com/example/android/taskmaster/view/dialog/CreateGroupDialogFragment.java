@@ -8,6 +8,10 @@ import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentManager;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 
 import com.example.android.taskmaster.R;
@@ -15,8 +19,18 @@ import com.example.android.taskmaster.databinding.DialogCreateGroupBinding;
 
 public class CreateGroupDialogFragment extends DialogFragment
 {
+  private static final String DIALOG_FRAGMENT_TAG = "create_group_tag";
+
   private DialogCreateGroupBinding binding;
   private ICreateGroupDialogListener listener;
+
+  public static CreateGroupDialogFragment newInstance()
+  {
+    CreateGroupDialogFragment fragment = new CreateGroupDialogFragment();
+    Bundle bundle = new Bundle();
+    fragment.setArguments(bundle);
+    return fragment;
+  }
 
   @Override
   public void onAttach(Context context)
@@ -61,6 +75,65 @@ public class CreateGroupDialogFragment extends DialogFragment
               }
             });
 
-    return builder.create();
+    final AlertDialog alertDialog = builder.create();
+
+    alertDialog.setOnShowListener(new DialogInterface.OnShowListener()
+    {
+      @Override
+      public void onShow(DialogInterface dialog)
+      {
+        // Initially disable the create button
+        alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+      }
+    });
+
+    setupTextChangeListener(alertDialog);
+
+    return alertDialog;
+  }
+
+  private void setupTextChangeListener(AlertDialog dialog)
+  {
+    binding.etDialogGroupName.addTextChangedListener(new CreateGroupDialogFragment.GroupNameTextWatcher(dialog));
+  }
+
+  class GroupNameTextWatcher implements TextWatcher
+  {
+    private AlertDialog alertDialog;
+
+    GroupNameTextWatcher(AlertDialog alertDialog)
+    {
+      this.alertDialog = alertDialog;
+    }
+
+    @Override
+    public void beforeTextChanged(CharSequence s, int start, int count, int after)
+    {
+
+    }
+
+    @Override
+    public void onTextChanged(CharSequence s, int start, int before, int count)
+    {
+      if(TextUtils.isEmpty(s))
+      {
+        alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+      }
+      else
+      {
+        alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+      }
+    }
+
+    @Override
+    public void afterTextChanged(Editable s)
+    {
+
+    }
+  }
+
+  public void show(FragmentManager fragmentManager)
+  {
+    super.show(fragmentManager, CreateGroupDialogFragment.DIALOG_FRAGMENT_TAG);
   }
 }
