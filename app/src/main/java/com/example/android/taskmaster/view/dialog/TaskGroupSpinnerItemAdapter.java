@@ -14,12 +14,12 @@ import com.example.android.taskmaster.utils.TaskMasterUtils;
 
 import java.util.List;
 
-public class TaskListSpinnerItemAdapter extends ArrayAdapter<TaskListSpinnerItem>
+public class TaskGroupSpinnerItemAdapter extends ArrayAdapter<TaskGroupSpinnerItem>
 {
-  TaskListSpinnerItemAdapter(@NonNull Context context,
-                             int resource,
-                             int textViewResourceId,
-                             @NonNull List<TaskListSpinnerItem> objects)
+  TaskGroupSpinnerItemAdapter(@NonNull Context context,
+                              int resource,
+                              int textViewResourceId,
+                              @NonNull List<TaskGroupSpinnerItem> objects)
   {
     super(context, resource, textViewResourceId, objects);
   }
@@ -34,11 +34,11 @@ public class TaskListSpinnerItemAdapter extends ArrayAdapter<TaskListSpinnerItem
     }
 
     // initialize views
-    TaskListSpinnerItem taskListSpinnerItem = getItem(position);
-    if(taskListSpinnerItem != null)
+    TaskGroupSpinnerItem taskGroupSpinnerItem = getItem(position);
+    if(taskGroupSpinnerItem != null)
     {
       TextView textView = convertView.findViewById(R.id.tv_task_group_spinner_item);
-      textView.setText(taskListSpinnerItem.getTaskListName());
+      textView.setText(taskGroupSpinnerItem.getTaskGroupName());
 
       // remove the square, we only want the text view in the selection box
       // the squares will be shown in the drop down list
@@ -59,14 +59,14 @@ public class TaskListSpinnerItemAdapter extends ArrayAdapter<TaskListSpinnerItem
     }
 
     // initialize views
-    TaskListSpinnerItem taskListSpinnerItem = getItem(position);
-    if(taskListSpinnerItem != null)
+    TaskGroupSpinnerItem taskGroupSpinnerItem = getItem(position);
+    if(taskGroupSpinnerItem != null)
     {
       TextView textView = convertView.findViewById(R.id.tv_task_group_spinner_item);
-      textView.setText(taskListSpinnerItem.getTaskListName());
+      textView.setText(taskGroupSpinnerItem.getTaskGroupName());
 
       View view = convertView.findViewById(R.id.view_task_group_spinner_item_color_square);
-      view.setBackgroundColor(TaskMasterUtils.colorIdToColorValue(getContext(), taskListSpinnerItem.getColor()));
+      view.setBackgroundColor(TaskMasterUtils.colorIdToColorValue(getContext(), taskGroupSpinnerItem.getColor()));
       view.setVisibility(View.VISIBLE);
     }
 
