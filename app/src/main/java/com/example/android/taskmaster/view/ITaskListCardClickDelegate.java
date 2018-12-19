@@ -4,5 +4,5 @@ import com.example.android.taskmaster.model.TaskListCardModel;
 
 public interface ITaskListCardClickDelegate
 {
-  public void onTaskListCardClick(TaskListCardModel taskListCardModel);
+  public void onTaskListCardClick(String taskListTitle, TaskListCardModel taskListCardModel);
 }
