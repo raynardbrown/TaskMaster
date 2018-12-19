@@ -194,9 +194,6 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
             position,
             sourceDragCardIndex);
 
-    // TODO: Delete comment
-    //Log.i(TaskListAdapter.TAG, "setupItemRecyclerView, position: " + position + " card list size: " + container.getCardList().size());
-
     container.setTaskListListAdapter(taskListListAdapter);
 
     itemBinding.rvTaskList.setOnDragListener(new CardDragListener());
