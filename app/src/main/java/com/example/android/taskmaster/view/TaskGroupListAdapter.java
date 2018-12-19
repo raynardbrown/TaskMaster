@@ -2,7 +2,6 @@ package com.example.android.taskmaster.view;
 
 import android.content.Context;
 import android.databinding.DataBindingUtil;
-import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,16 +9,18 @@ import android.view.ViewGroup;
 
 import com.example.android.taskmaster.R;
 import com.example.android.taskmaster.databinding.TaskGroupListItemBinding;
+import com.example.android.taskmaster.model.TaskGroupModel;
+import com.example.android.taskmaster.utils.TaskMasterUtils;
 
 import java.util.List;
 
-public class TaskGroupListAdapter extends  RecyclerView.Adapter<TaskGroupListAdapter.TaskGroupListViewHolder>
+public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdapter.TaskGroupListViewHolder>
 {
-  private List<String> taskGroupList;
+  private List<TaskGroupModel> taskGroupList;
 
   private ITaskGroupListItemClickListener listener;
 
-  TaskGroupListAdapter(List<String> taskGroupList,
+  TaskGroupListAdapter(List<TaskGroupModel> taskGroupList,
                        ITaskGroupListItemClickListener listener)
   {
     this.taskGroupList = taskGroupList;
@@ -43,10 +44,14 @@ public class TaskGroupListAdapter extends  RecyclerView.Adapter<TaskGroupListAda
   @Override
   public void onBindViewHolder(TaskGroupListViewHolder holder, int position)
   {
-    // TODO: Don't hard code color
-    int backgroundColor = Color.argb(255, 0, 0, 255);
-    holder.itemBinding.taskGroupListItemColorSquare.setBackgroundColor(backgroundColor);
-    holder.itemBinding.tvTaskGroupListItemName.setText(taskGroupList.get(position));
+    TaskGroupListItemBinding itemBinding = holder.itemBinding;
+
+    int color = TaskMasterUtils.colorIdToColorValue(itemBinding.taskGroupListItemColorSquare.getContext(),
+            taskGroupList.get(position).getColorKey());
+
+    itemBinding.taskGroupListItemColorSquare.setBackgroundColor(color);
+
+    itemBinding.tvTaskGroupListItemName.setText(taskGroupList.get(position).getTitle());
   }
 
   @Override
