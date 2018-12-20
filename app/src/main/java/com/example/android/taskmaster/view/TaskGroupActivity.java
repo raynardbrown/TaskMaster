@@ -245,9 +245,13 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
   }
 
   @Override
-  public void onTaskListCardClick(String taskListTitle, TaskListCardModel taskListCardModel)
+  public void onTaskListCardClick(String taskListTitle,TaskListCardModel taskListCardModel)
   {
-    Intent intent = CardDetailActivity.getStartIntent(this, taskListTitle, taskListCardModel);
+    Intent intent = CardDetailActivity.getStartIntent(this,
+            taskGroupModel.getTitle(),
+            taskListTitle,
+            taskListCardModel);
+
     startActivity(intent);
   }
 
