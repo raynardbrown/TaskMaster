@@ -94,7 +94,7 @@ public class CreateGroupDialogFragment extends DialogFragment
 
   private void setupTextChangeListener(AlertDialog dialog)
   {
-    binding.etDialogGroupName.addTextChangedListener(new CreateGroupDialogFragment.GroupNameTextWatcher(dialog));
+    binding.etDialogGroupName.addTextChangedListener(new GroupNameTextWatcher(dialog));
   }
 
   class GroupNameTextWatcher implements TextWatcher
