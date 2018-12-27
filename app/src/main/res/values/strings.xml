@@ -44,6 +44,8 @@
     <string name="log_in_activity_dialog_send_password_send_password_button_string" translatable="true">Send Password</string>
     <string name="log_in_activity_dialog_send_password_cancel_button_string" translatable="true">Cancel</string>
 
+    <string name="error_log_in_activity_dialog_send_password_email_address_string" translatable="true">Please enter a valid email address</string>
+
     <!--
          Main Activity Strings
     -->
@@ -114,15 +116,20 @@
     <string name="card_detail_activity_menu_edit_commit_string" translatable="true">Commit Edit</string>
     <string name="card_detail_activity_menu_checklist_delete_string" translatable="true">Delete&#8230;</string>
     <string name="card_detail_activity_attachment_time_format_string" translatable="true">%1$s at %2$s</string>
-    <string name="card_detail_activity_toolbar_location_format_string" translatable="true">Task Group in task list %1$s</string>
+    <string name="card_detail_activity_toolbar_location_format_string" translatable="true">%1$s in task list %2$s</string>
     <string name="card_detail_activity_edit_check_list_string" translatable="true">Edit Checklist</string>
     <string name="card_detail_activity_add_check_list_item_string" translatable="true">Add Item&#8230;</string>
     <string name="card_detail_activity_new_check_list_item_string" translatable="true">New Checklist Item</string>
     <string name="card_detail_activity_edit_check_list_item_string" translatable="true">Edit Checklist Item</string>
     <string name="card_detail_activity_edit_description_title_string" translatable="true">Edit Description</string>
+    <string name="card_detail_activity_edit_toolbar_title_string" translatable="true">Edit Title</string>
     <string name="card_detail_activity_default_checklist_name_string" translatable="true">Checklist</string>
     <string name="card_detail_activity_not_due_time_format_string" translatable="true">Due %1$s at %2$s</string>
     <string name="card_detail_activity_past_due_time_format_string" translatable="true">Was due %1$s at %2$s</string>
+    <string name="card_detail_activity_menu_attachment_link_delete_string" translatable="true">Delete</string>
+    <string name="card_detail_activity_menu_attachment_image_add_to_toolbar_string" translatable="true">Add to toolbar</string>
+    <string name="card_detail_activity_menu_attachment_image_remove_from_toolbar_string" translatable="true">Remove from toolbar</string>
+    <string name="card_detail_activity_menu_attachment_image_delete_string" translatable="true">Delete</string>
 
     <!--
          Card Detail Activity Due Date Dialog Strings
@@ -187,8 +194,13 @@
     <string name="task_list_card_model_object_key">task_list_card_model_object</string>
     <string name="task_list_model_container_object_list_key">task_list_model_container_object_list</string>
     <string name="task_list_title_key">task_list_title</string>
+    <string name="task_group_title_key">task_group_title</string>
     <string name="due_date_key">due_date</string>
     <string name="due_date_current_drawable_color_key">due_date_current_drawable_color</string>
+    <string name="due_date_model_object_key">due_date_model_object</string>
+    <string name="check_list_container_list_object_key">check_list_container_list_object</string>
+    <string name="attachment_creation_info_list_object_key">attachment_creation_info_list_object</string>
+    <string name="attachment_image_toolbar_index_key">attachment_image_toolbar_index</string>
 
     <!--
          Tools resource strings
