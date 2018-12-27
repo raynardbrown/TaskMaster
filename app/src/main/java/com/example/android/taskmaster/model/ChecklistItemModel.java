@@ -1,6 +1,9 @@
 package com.example.android.taskmaster.model;
 
-public class ChecklistItemModel
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class ChecklistItemModel implements Parcelable
 {
   private String checklistId;
   private String itemTitle;
@@ -17,6 +20,29 @@ public class ChecklistItemModel
     this.itemIndex = itemIndex;
     this.completed = completed;
   }
+
+  protected ChecklistItemModel(Parcel in)
+  {
+    checklistId = in.readString();
+    itemTitle = in.readString();
+    itemIndex = in.readInt();
+    completed = in.readByte() != 0;
+  }
+
+  public static final Creator<ChecklistItemModel> CREATOR = new Creator<ChecklistItemModel>()
+  {
+    @Override
+    public ChecklistItemModel createFromParcel(Parcel in)
+    {
+      return new ChecklistItemModel(in);
+    }
+
+    @Override
+    public ChecklistItemModel[] newArray(int size)
+    {
+      return new ChecklistItemModel[size];
+    }
+  };
 
   public String getChecklistId()
   {
@@ -56,5 +82,20 @@ public class ChecklistItemModel
   public void setCompleted(boolean completed)
   {
     this.completed = completed;
+  }
+
+  @Override
+  public int describeContents()
+  {
+    return 0;
+  }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags)
+  {
+    dest.writeString(checklistId);
+    dest.writeString(itemTitle);
+    dest.writeInt(itemIndex);
+    dest.writeByte((byte) (completed ? 1 : 0));
   }
 }
