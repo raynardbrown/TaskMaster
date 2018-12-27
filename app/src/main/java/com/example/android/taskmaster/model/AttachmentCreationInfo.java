@@ -1,6 +1,9 @@
 package com.example.android.taskmaster.model;
 
-public class AttachmentCreationInfo
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class AttachmentCreationInfo implements Parcelable
 {
   private AttachmentModel attachmentModel;
   private AttachmentExtraDataModel attachmentExtraDataModel;
@@ -23,6 +26,31 @@ public class AttachmentCreationInfo
     this.attachmentExtraPath = attachmentExtraPath;
     this.attachmentExtraType = attachmentExtraType;
   }
+
+  protected AttachmentCreationInfo(Parcel in)
+  {
+    attachmentModel = in.readParcelable(AttachmentModel.class.getClassLoader());
+    attachmentExtraDataModel = in.readParcelable(AttachmentExtraDataModel.class.getClassLoader());
+    attachmentPath = in.readString();
+    attachmentType = in.readInt();
+    attachmentExtraPath = in.readString();
+    attachmentExtraType = in.readInt();
+  }
+
+  public static final Creator<AttachmentCreationInfo> CREATOR = new Creator<AttachmentCreationInfo>()
+  {
+    @Override
+    public AttachmentCreationInfo createFromParcel(Parcel in)
+    {
+      return new AttachmentCreationInfo(in);
+    }
+
+    @Override
+    public AttachmentCreationInfo[] newArray(int size)
+    {
+      return new AttachmentCreationInfo[size];
+    }
+  };
 
   public AttachmentModel getAttachmentModel()
   {
@@ -79,9 +107,25 @@ public class AttachmentCreationInfo
     return attachmentExtraDataModel;
   }
 
-  public void setAttachmentExtraDataModel(
-          AttachmentExtraDataModel attachmentExtraDataModel)
+  public void setAttachmentExtraDataModel(AttachmentExtraDataModel attachmentExtraDataModel)
   {
     this.attachmentExtraDataModel = attachmentExtraDataModel;
+  }
+
+  @Override
+  public int describeContents()
+  {
+    return 0;
+  }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags)
+  {
+    dest.writeParcelable(attachmentModel, flags);
+    dest.writeParcelable(attachmentExtraDataModel, flags);
+    dest.writeString(attachmentPath);
+    dest.writeInt(attachmentType);
+    dest.writeString(attachmentExtraPath);
+    dest.writeInt(attachmentExtraType);
   }
 }
