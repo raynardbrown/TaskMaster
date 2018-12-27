@@ -1,27 +1,68 @@
 package com.example.android.taskmaster.model;
 
-import java.util.List;
+import android.os.Parcel;
+import android.os.Parcelable;
 
-public class ChecklistModel
+public class ChecklistModel implements Parcelable
 {
   private String cardId;
   private String checklistId;
   private String checklistTitle;
   private int checklistIndex;
-  private List<ChecklistItemModel> checklistItemModelList;
+  private boolean collapsed;
 
   public ChecklistModel(String cardId,
                         String checklistId,
                         String checklistTitle,
                         int checklistIndex,
-                        List<ChecklistItemModel> checklistItemModelList)
+                        boolean collapsed)
   {
     this.cardId = cardId;
     this.checklistId = checklistId;
     this.checklistTitle = checklistTitle;
     this.checklistIndex = checklistIndex;
-    this.checklistItemModelList = checklistItemModelList;
+    this.collapsed = collapsed;
   }
+
+  protected ChecklistModel(Parcel in)
+  {
+    cardId = in.readString();
+    checklistId = in.readString();
+    checklistTitle = in.readString();
+    checklistIndex = in.readInt();
+    collapsed = in.readByte() != 0;
+  }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags)
+  {
+    dest.writeString(cardId);
+    dest.writeString(checklistId);
+    dest.writeString(checklistTitle);
+    dest.writeInt(checklistIndex);
+    dest.writeByte((byte) (collapsed ? 1 : 0));
+  }
+
+  @Override
+  public int describeContents()
+  {
+    return 0;
+  }
+
+  public static final Creator<ChecklistModel> CREATOR = new Creator<ChecklistModel>()
+  {
+    @Override
+    public ChecklistModel createFromParcel(Parcel in)
+    {
+      return new ChecklistModel(in);
+    }
+
+    @Override
+    public ChecklistModel[] newArray(int size)
+    {
+      return new ChecklistModel[size];
+    }
+  };
 
   public String getCardId()
   {
@@ -63,13 +104,13 @@ public class ChecklistModel
     this.checklistIndex = checklistIndex;
   }
 
-  public List<ChecklistItemModel> getChecklistItemModelList()
+  public boolean isCollapsed()
   {
-    return checklistItemModelList;
+    return collapsed;
   }
 
-  public void setChecklistItemModelList(List<ChecklistItemModel> checklistItemModelList)
+  public void setCollapsed(boolean collapsed)
   {
-    this.checklistItemModelList = checklistItemModelList;
+    this.collapsed = collapsed;
   }
 }
