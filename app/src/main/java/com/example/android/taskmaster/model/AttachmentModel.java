@@ -1,25 +1,73 @@
 package com.example.android.taskmaster.model;
 
-public class AttachmentModel
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class AttachmentModel implements Parcelable
 {
   private String cardId;
   private String attachmentData;
   private int attachmentIndex;
   private long attachmentTime;
   private int attachmentType;
+  private boolean bound;
 
   public AttachmentModel(String cardId,
                          String attachmentData,
                          int attachmentIndex,
                          long attachmentTime,
-                         int attachmentType)
+                         int attachmentType,
+                         boolean bound)
   {
     this.cardId = cardId;
     this.attachmentData = attachmentData;
     this.attachmentIndex = attachmentIndex;
     this.attachmentTime = attachmentTime;
     this.attachmentType = attachmentType;
+    this.bound = bound;
   }
+
+  protected AttachmentModel(Parcel in)
+  {
+    cardId = in.readString();
+    attachmentData = in.readString();
+    attachmentIndex = in.readInt();
+    attachmentTime = in.readLong();
+    attachmentType = in.readInt();
+    bound = in.readByte() != 0;
+  }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags)
+  {
+    dest.writeString(cardId);
+    dest.writeString(attachmentData);
+    dest.writeInt(attachmentIndex);
+    dest.writeLong(attachmentTime);
+    dest.writeInt(attachmentType);
+    dest.writeByte((byte) (bound ? 1 : 0));
+  }
+
+  @Override
+  public int describeContents()
+  {
+    return 0;
+  }
+
+  public static final Creator<AttachmentModel> CREATOR = new Creator<AttachmentModel>()
+  {
+    @Override
+    public AttachmentModel createFromParcel(Parcel in)
+    {
+      return new AttachmentModel(in);
+    }
+
+    @Override
+    public AttachmentModel[] newArray(int size)
+    {
+      return new AttachmentModel[size];
+    }
+  };
 
   public String getCardId()
   {
@@ -70,4 +118,15 @@ public class AttachmentModel
   {
     this.attachmentType = attachmentType;
   }
+
+  public boolean isBound()
+  {
+    return bound;
+  }
+
+  public void setBound(boolean bound)
+  {
+    this.bound = bound;
+  }
+
 }
