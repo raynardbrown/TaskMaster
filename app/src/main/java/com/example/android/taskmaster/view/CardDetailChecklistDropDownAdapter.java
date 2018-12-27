@@ -22,16 +22,23 @@ public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<Car
 {
   private String parentChecklistId;
   private List<ChecklistItemModel> checklistList;
+  private int checkListIndex;
   private IChecklistItemClickListener checklistItemClickListener;
+  private IDeleteChecklistItemListener deleteChecklistItemListener;
   private Drawable checkListItemUnderlineSave;
+  private Drawable checkListAddItemUnderlineSave;
 
   CardDetailChecklistDropDownAdapter(String parentChecklistId,
                                      List<ChecklistItemModel> checklistList,
-                                     IChecklistItemClickListener checklistItemClickListener)
+                                     int checkListIndex,
+                                     IChecklistItemClickListener checklistItemClickListener,
+                                     IDeleteChecklistItemListener deleteChecklistItemListener)
   {
     this.parentChecklistId = parentChecklistId;
     this.checklistList = checklistList;
+    this.checkListIndex = checkListIndex;
     this.checklistItemClickListener = checklistItemClickListener;
+    this.deleteChecklistItemListener = deleteChecklistItemListener;
   }
 
   @Override
@@ -67,16 +74,23 @@ public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<Car
       itemBinding.cbCardDetailActivityChecklistItem.setVisibility(View.INVISIBLE);
       itemBinding.menuButtonCardDetailActivityChecklistItemDelete.setVisibility(View.INVISIBLE);
 
-      if(checkListItemUnderlineSave == null)
+      if(checkListAddItemUnderlineSave == null)
       {
         // cache the underline if we haven't already
-        checkListItemUnderlineSave = TaskMasterUtils.retrieveEditTextUnderline(itemBinding.etCardDetailActivityChecklistItemName);
+        checkListAddItemUnderlineSave = TaskMasterUtils.retrieveEditTextUnderline(itemBinding.etCardDetailActivityChecklistItemName);
+
+        // Save a copy of the drawable so that the state is not shared with a "new checklist item"
+        // drawable.
+        if(checkListAddItemUnderlineSave.getConstantState() != null)
+        {
+          checkListAddItemUnderlineSave = checkListAddItemUnderlineSave.getConstantState().newDrawable().mutate();
+        }
       }
       else
       {
         // Make sure that the underline is visible
         TaskMasterUtils.restoreEditTextUnderline(itemBinding.etCardDetailActivityChecklistItemName,
-                checkListItemUnderlineSave);
+                checkListAddItemUnderlineSave);
       }
 
       // add the listeners
@@ -104,6 +118,7 @@ public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<Car
       itemBinding.etCardDetailActivityChecklistItemName.setOnFocusChangeListener(new ChecklistItemFocusListener(itemBinding.etCardDetailActivityChecklistItemName,
               position,
               itemBinding.menuButtonCardDetailActivityChecklistItemDelete));
+      itemBinding.menuButtonCardDetailActivityChecklistItemDelete.setOnClickListener(new ChecklistItemDeleteButtonClickListener(holder));
     }
   }
 
@@ -117,28 +132,26 @@ public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<Car
   class AddItemCompleteListener implements IEditCompleteListener
   {
     private EditText editText;
+    private boolean completeSuccess;
 
     AddItemCompleteListener(EditText editText)
     {
       this.editText = editText;
+      completeSuccess = false;
     }
 
     @Override
     public void onEditComplete()
     {
-      // Strip the edit text of focus
-      editText.setFocusableInTouchMode(false);
-      editText.setFocusable(false);
-      editText.setFocusableInTouchMode(true);
-      editText.setFocusable(true);
-
       // Check to make sure the edit text length is greater than 0. Believe it or not the edit text
       // function getText().toString() can actually return the hint?!?!
       if(editText.length() > 0)
       {
+        String newText = editText.getText().toString();
+
         // Grab the text and add the item to the list if and only if the string is not empty
         ChecklistItemModel checklistItemModel = new ChecklistItemModel(parentChecklistId,
-                editText.getText().toString(),
+                newText,
                 checklistList.size(),
                 false);
 
@@ -146,52 +159,37 @@ public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<Car
 
         // notify the adapter
         notifyDataSetChanged();
+
+        completeSuccess = true;
+
+        // TODO: update the database too
       }
 
-      // TODO: update the database too
-
-      Context context = editText.getContext();
-      editText.setHint(context.getString(R.string.card_detail_activity_add_check_list_item_string));
-      editText.setText("");
+      // normally you would strip the focus first, however clearing the focus triggers our focus
+      // lost listener which clears the edit text. So we must wait to strip the focus until after
+      // we have gathered the data from the edit text.
+      stripFocus();
     }
-  }
 
-  class ChecklistItemCompleteListener implements IEditCompleteListener
-  {
-    private EditText editText;
-    private int position;
-
-    ChecklistItemCompleteListener(EditText editText, int position)
+    boolean getCompleteSuccess()
     {
-      this.editText = editText;
-      this.position = position;
+      return completeSuccess;
     }
 
-    @Override
-    public void onEditComplete()
+    private void stripFocus()
     {
       // Strip the edit text of focus
       editText.setFocusableInTouchMode(false);
       editText.setFocusable(false);
       editText.setFocusableInTouchMode(true);
       editText.setFocusable(true);
-
-      String changedText = editText.getText().toString();
-
-      ChecklistItemModel itemModel = checklistList.get(position);
-
-      itemModel.setItemTitle(changedText);
-
-      // notify the adapter
-      notifyDataSetChanged();
-
-      // TODO: update the database too
     }
   }
 
   class AddItemFocusListener implements View.OnFocusChangeListener
   {
     private EditText editText;
+    private AddItemCompleteListener addItemCompleteListener;
 
     AddItemFocusListener(EditText editText)
     {
@@ -203,22 +201,66 @@ public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<Car
     {
       if(hasFocus)
       {
+        addItemCompleteListener = new AddItemCompleteListener(editText);
+
         Context context = editText.getContext();
 
         final boolean showCommitButton = true;
 
         checklistItemClickListener.onChecklistItemClick(context.getString(R.string.card_detail_activity_new_check_list_item_string),
                 showCommitButton,
-                new AddItemCompleteListener(editText));
+                addItemCompleteListener);
       }
       else
       {
         final boolean hideCommitButton = false;
 
+        if(!addItemCompleteListener.getCompleteSuccess())
+        {
+          commitUiChanges();
+
+          TaskMasterUtils.restoreEditTextUnderline(editText,
+                  checkListAddItemUnderlineSave);
+        }
+
         checklistItemClickListener.onChecklistItemClick("",
                 hideCommitButton,
                 null);
       }
+    }
+
+    private void commitUiChanges()
+    {
+      Context context = editText.getContext();
+      editText.setHint(context.getString(R.string.card_detail_activity_add_check_list_item_string));
+
+      // use clear instead of setText("")
+      editText.getText().clear();
+    }
+  }
+
+  class ChecklistItemCompleteListener implements IEditCompleteListener
+  {
+    private EditText editText;
+
+    ChecklistItemCompleteListener(EditText editText)
+    {
+      this.editText = editText;
+    }
+
+    @Override
+    public void onEditComplete()
+    {
+      stripFocus();
+    }
+
+    private void stripFocus()
+    {
+      // Strip the edit text of focus
+      editText.setFocusableInTouchMode(false);
+      editText.setFocusable(false);
+      editText.setFocusableInTouchMode(true);
+      editText.setFocusable(true);
     }
   }
 
@@ -254,7 +296,7 @@ public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<Car
 
         checklistItemClickListener.onChecklistItemClick(context.getString(R.string.card_detail_activity_edit_check_list_item_string),
                 showCommitButton,
-                new ChecklistItemCompleteListener(editText, position));
+                new ChecklistItemCompleteListener(editText));
       }
       else
       {
@@ -269,12 +311,25 @@ public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<Car
         checklistItemClickListener.onChecklistItemClick("",
                 hideCommitButton,
                 null);
+
+        commitUiChanges();
+
+        // TODO: Update database
       }
+    }
+
+    private void commitUiChanges()
+    {
+      String changedText = editText.getText().toString();
+
+      ChecklistItemModel itemModel = checklistList.get(position);
+
+      itemModel.setItemTitle(changedText);
     }
   }
 
   /**
-   * See the EditDescriptionOnTouchListener class description.
+   * See the EditDescriptionTouchListener class description.
    */
   class ChecklistItemOnTouchListener implements View.OnTouchListener
   {
@@ -282,6 +337,22 @@ public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<Car
     public boolean onTouch(View v, MotionEvent event)
     {
       return false;
+    }
+  }
+
+  class ChecklistItemDeleteButtonClickListener implements View.OnClickListener
+  {
+    private CardDetailChecklistDropDownAdapterViewHolder holder;
+
+    ChecklistItemDeleteButtonClickListener(CardDetailChecklistDropDownAdapterViewHolder holder)
+    {
+      this.holder = holder;
+    }
+
+    @Override
+    public void onClick(View v)
+    {
+      deleteChecklistItemListener.onChecklistItemDelete(holder.getAdapterPosition(), checkListIndex);
     }
   }
 
