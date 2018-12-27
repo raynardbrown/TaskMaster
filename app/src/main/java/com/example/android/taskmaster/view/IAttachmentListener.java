@@ -19,4 +19,8 @@ public interface IAttachmentListener
    * @param index index of the attachment that wants to be removed.
    */
   public void onAttachmentRemoveRequest(int index);
+
+  public void onAttachmentBindRequest(int index, ImageView imageView);
+
+  public void onAttachmentUnbindRequest(int index);
 }
