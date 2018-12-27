@@ -13,9 +13,17 @@
 
     <!--
          Ensure the back button on a child activity is the correct color on the tool bar
+
+         "android:textColorPrimary"
+         Activity name
+
+         "android:textColor"
+         Menu text color on the toolbar
     -->
     <style name="ToolbarActionBarTheme" parent="ThemeOverlay.AppCompat.ActionBar">
         <item name="colorControlNormal">@android:color/white</item>
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="android:textColor">@android:color/black</item>
     </style>
 
 </resources>
