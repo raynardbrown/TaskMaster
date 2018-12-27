@@ -26,4 +26,9 @@
     <color name="due_date_sooner">#FFFFA500</color>
     <color name="due_date_soon">#FF808080</color>
     <color name="due_date_completed">#FF00CC00</color>
+
+    <!--
+         Card detail meta bar color
+    -->
+    <color name="card_detail_meta_bar_default_color">#FF333333</color>
 </resources>
