@@ -22,7 +22,21 @@ public class TaskListModelContainer implements Parcelable
 
   protected TaskListModelContainer(Parcel in)
   {
+    taskListModel = in.readParcelable(TaskListModel.class.getClassLoader());
     cardList = in.createTypedArrayList(TaskListCardModel.CREATOR);
+  }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags)
+  {
+    dest.writeParcelable(taskListModel, flags);
+    dest.writeTypedList(cardList);
+  }
+
+  @Override
+  public int describeContents()
+  {
+    return 0;
   }
 
   public static final Creator<TaskListModelContainer> CREATOR = new Creator<TaskListModelContainer>()
@@ -60,15 +74,4 @@ public class TaskListModelContainer implements Parcelable
     this.taskListListAdapter = taskListListAdapter;
   }
 
-  @Override
-  public int describeContents()
-  {
-    return 0;
-  }
-
-  @Override
-  public void writeToParcel(Parcel dest, int flags)
-  {
-    dest.writeTypedList(cardList);
-  }
 }
