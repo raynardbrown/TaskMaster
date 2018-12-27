@@ -21,14 +21,15 @@ import android.widget.ImageButton;
 import com.example.android.taskmaster.R;
 import com.example.android.taskmaster.databinding.ChecklistItemBinding;
 import com.example.android.taskmaster.model.ChecklistModel;
+import com.example.android.taskmaster.model.ChecklistModelContainer;
 import com.example.android.taskmaster.utils.TaskMasterUtils;
 import com.example.android.taskmaster.view.dialog.DeleteChecklistDialogFragment;
 
 import java.util.List;
 
-public class CardDetailChecklistAdapter extends RecyclerView.Adapter<CardDetailChecklistAdapter.CardDetailChecklistAdapterViewHolder>
+public class CardDetailChecklistAdapter extends RecyclerView.Adapter<CardDetailChecklistAdapter.CardDetailChecklistAdapterViewHolder> implements IDeleteChecklistItemListener
 {
-  private List<ChecklistModel> checklistList;
+  private List<ChecklistModelContainer> checklistList;
 
   private AppCompatActivity activity;
 
@@ -37,7 +38,7 @@ public class CardDetailChecklistAdapter extends RecyclerView.Adapter<CardDetailC
   private Drawable checklistUnderlineSave;
 
   CardDetailChecklistAdapter(AppCompatActivity activity,
-                             List<ChecklistModel> checklistList,
+                             List<ChecklistModelContainer> checklistList,
                              IChecklistItemClickListener checklistItemClickListener)
   {
     this.activity = activity;
@@ -64,7 +65,7 @@ public class CardDetailChecklistAdapter extends RecyclerView.Adapter<CardDetailC
   {
     ChecklistItemBinding itemBinding = holder.itemBinding;
 
-    itemBinding.etChecklistName.setText(checklistList.get(position).getChecklistTitle());
+    itemBinding.etChecklistName.setText(checklistList.get(position).getChecklistModel().getChecklistTitle());
 
     Drawable checklistUnderlineSaveTemp = TaskMasterUtils.removeEditTextUnderline(itemBinding.etChecklistName);
 
@@ -77,12 +78,24 @@ public class CardDetailChecklistAdapter extends RecyclerView.Adapter<CardDetailC
     itemBinding.etChecklistName.setOnFocusChangeListener(new ChecklistFocusListener(itemBinding.etChecklistName, position));
     itemBinding.etChecklistName.setOnTouchListener(new ChecklistOnTouchListener());
 
-    itemBinding.chevronButtonChecklist.setOnClickListener(new CheckListChevronClickListener(holder.itemBinding.chevronButtonChecklist,
+    itemBinding.chevronButtonChecklist.setOnClickListener(new CheckListChevronClickListener(holder,
+            holder.itemBinding.chevronButtonChecklist,
             itemBinding.rvChecklist));
 
-    itemBinding.menuButtonChecklist.setOnClickListener(new ChecklistDeleteChecklistMenuClickListener(position));
+    itemBinding.menuButtonChecklist.setOnClickListener(new ChecklistDeleteChecklistMenuClickListener(holder));
 
     setupCheckListItemRecyclerView(itemBinding, position);
+
+    if(checklistList.get(holder.getAdapterPosition()).getChecklistModel().isCollapsed())
+    {
+      itemBinding.rvChecklist.setVisibility(View.GONE);
+      itemBinding.chevronButtonChecklist.setImageDrawable(itemBinding.rvChecklist.getResources().getDrawable(R.drawable.ic_baseline_expand_more_24px));
+    }
+    else
+    {
+      itemBinding.rvChecklist.setVisibility(View.VISIBLE);
+      itemBinding.chevronButtonChecklist.setImageDrawable(itemBinding.rvChecklist.getResources().getDrawable(R.drawable.ic_baseline_expand_less_24px));
+    }
   }
 
   @Override
@@ -96,42 +109,55 @@ public class CardDetailChecklistAdapter extends RecyclerView.Adapter<CardDetailC
     LinearLayoutManager layoutManager = new LinearLayoutManager(itemBinding.getRoot().getContext());
     itemBinding.rvChecklist.setLayoutManager(layoutManager);
 
-    CardDetailChecklistDropDownAdapter adapter = new CardDetailChecklistDropDownAdapter(checklistList.get(position).getChecklistId(),
-            checklistList.get(position).getChecklistItemModelList(),
-            checklistItemClickListener);
+    ChecklistModelContainer container = checklistList.get(position);
+
+    CardDetailChecklistDropDownAdapter adapter = new CardDetailChecklistDropDownAdapter(container.getChecklistModel().getChecklistId(),
+            container.getChecklistItemModelList(),
+            position,
+            checklistItemClickListener,
+            this);
+
+    container.setCardDetailChecklistDropDownAdapter(adapter);
 
     itemBinding.rvChecklist.setAdapter(adapter);
 
     ViewCompat.setNestedScrollingEnabled(itemBinding.rvChecklist, false);
   }
 
+  @Override
+  public void onChecklistItemDelete(int checklistIndex, int itemIndex)
+  {
+    ChecklistModelContainer container = checklistList.get(checklistIndex);
+
+    container.getChecklistItemModelList().remove(itemIndex);
+
+    container.getCardDetailChecklistDropDownAdapter().notifyDataSetChanged();
+
+    // TODO: Update database
+  }
+
   class ChecklistCompleteListener implements IEditCompleteListener
   {
     private EditText editText;
-    private int position;
 
-    ChecklistCompleteListener(EditText editText, int position)
+    ChecklistCompleteListener(EditText editText)
     {
       this.editText = editText;
-      this.position = position;
     }
 
     @Override
     public void onEditComplete()
+    {
+      stripFocus();
+    }
+
+    private void stripFocus()
     {
       // Strip the edit text of focus
       editText.setFocusableInTouchMode(false);
       editText.setFocusable(false);
       editText.setFocusableInTouchMode(true);
       editText.setFocusable(true);
-
-      String changedText = editText.getText().toString();
-
-      ChecklistModel itemModel = checklistList.get(position);
-
-      itemModel.setChecklistTitle(changedText);
-
-      // TODO: update the database too
     }
   }
 
@@ -160,7 +186,7 @@ public class CardDetailChecklistAdapter extends RecyclerView.Adapter<CardDetailC
 
         checklistItemClickListener.onChecklistItemClick(context.getString(R.string.card_detail_activity_edit_check_list_string),
                 showCommitButton,
-                new ChecklistCompleteListener(editText, position));
+                new ChecklistCompleteListener(editText));
       }
       else
       {
@@ -172,12 +198,25 @@ public class CardDetailChecklistAdapter extends RecyclerView.Adapter<CardDetailC
         checklistItemClickListener.onChecklistItemClick("",
                 hideCommitButton,
                 null);
+
+        commitUiChanges();
+
+        // TODO: update the database too
       }
+    }
+
+    private void commitUiChanges()
+    {
+      String changedText = editText.getText().toString();
+
+      ChecklistModel itemModel = checklistList.get(position).getChecklistModel();
+
+      itemModel.setChecklistTitle(changedText);
     }
   }
 
   /**
-   * See the EditDescriptionOnTouchListener class description.
+   * See the EditDescriptionTouchListener class description.
    */
   class ChecklistOnTouchListener implements View.OnTouchListener
   {
@@ -190,12 +229,15 @@ public class CardDetailChecklistAdapter extends RecyclerView.Adapter<CardDetailC
 
   class CheckListChevronClickListener implements View.OnClickListener
   {
+    private CardDetailChecklistAdapterViewHolder holder;
     private ImageButton chevronButton;
     private RecyclerView recyclerView;
 
-    CheckListChevronClickListener(ImageButton chevronButton,
+    CheckListChevronClickListener(CardDetailChecklistAdapterViewHolder holder,
+                                  ImageButton chevronButton,
                                   RecyclerView recyclerView)
     {
+      this.holder = holder;
       this.chevronButton = chevronButton;
       this.recyclerView = recyclerView;
     }
@@ -208,42 +250,46 @@ public class CardDetailChecklistAdapter extends RecyclerView.Adapter<CardDetailC
       {
         recyclerView.setVisibility(View.VISIBLE);
         chevronButton.setImageDrawable(v.getResources().getDrawable(R.drawable.ic_baseline_expand_less_24px));
+
+        checklistList.get(holder.getAdapterPosition()).getChecklistModel().setCollapsed(false);
       }
       else
       {
         recyclerView.setVisibility(View.GONE);
         chevronButton.setImageDrawable(v.getResources().getDrawable(R.drawable.ic_baseline_expand_more_24px));
+
+        checklistList.get(holder.getAdapterPosition()).getChecklistModel().setCollapsed(true);
       }
     }
   }
 
   class ChecklistDeleteChecklistMenuClickListener implements View.OnClickListener
   {
-    private int position;
+    private CardDetailChecklistAdapterViewHolder holder;
 
-    ChecklistDeleteChecklistMenuClickListener(int position)
+    ChecklistDeleteChecklistMenuClickListener(CardDetailChecklistAdapterViewHolder holder)
     {
-      this.position = position;
+      this.holder = holder;
     }
 
     @Override
     public void onClick(View v)
     {
       PopupMenu popup = new PopupMenu(v.getContext(), v);
-      popup.setOnMenuItemClickListener(new ChecklistDeleteChecklistMenuItemCLickListener(position));
+      popup.setOnMenuItemClickListener(new ChecklistDeleteChecklistMenuItemClickListener(holder));
       MenuInflater inflater = popup.getMenuInflater();
       inflater.inflate(R.menu.menu_checklist, popup.getMenu());
       popup.show();
     }
   }
 
-  class ChecklistDeleteChecklistMenuItemCLickListener implements PopupMenu.OnMenuItemClickListener
+  class ChecklistDeleteChecklistMenuItemClickListener implements PopupMenu.OnMenuItemClickListener
   {
-    private int position;
+    private CardDetailChecklistAdapterViewHolder holder;
 
-    ChecklistDeleteChecklistMenuItemCLickListener(int position)
+    ChecklistDeleteChecklistMenuItemClickListener(CardDetailChecklistAdapterViewHolder holder)
     {
-      this.position = position;
+      this.holder = holder;
     }
 
     @Override
@@ -256,7 +302,7 @@ public class CardDetailChecklistAdapter extends RecyclerView.Adapter<CardDetailC
           DeleteChecklistDialogFragment dialogFragment = new DeleteChecklistDialogFragment();
 
           Bundle bundle = new Bundle();
-          bundle.putInt(activity.getString(R.string.check_list_position_key), position);
+          bundle.putInt(activity.getString(R.string.check_list_position_key), holder.getAdapterPosition());
 
           dialogFragment.setArguments(bundle);
 
