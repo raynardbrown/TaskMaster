@@ -2,7 +2,9 @@ package com.example.android.taskmaster.view;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
+import android.preference.PreferenceManager;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -225,10 +227,14 @@ public class LogInActivity extends AppCompatActivity implements IForgotPasswordD
       {
         // TODO: trigger log in and show progress
         // TODO: for now fake the login and start the main activity for testing
-        Intent intent = new Intent(LogInActivity.this, MainActivity.class);
 
-        // Also clear the back stack
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK  | Intent.FLAG_ACTIVITY_NEW_TASK);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(LogInActivity.this);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        editor.putBoolean(getString(R.string.shared_pref_user_logged_in_key), true);
+        editor.apply();
+
+        Intent intent = MainActivity.getStartIntent(LogInActivity.this);
 
         startActivity(intent);
 
