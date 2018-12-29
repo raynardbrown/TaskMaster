@@ -1,8 +1,10 @@
 package com.example.android.taskmaster.utils;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.support.annotation.ColorRes;
 import android.support.annotation.DrawableRes;
 import android.support.v4.content.ContextCompat;
@@ -108,5 +110,12 @@ public class TaskMasterUtils
       window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
       window.setStatusBarColor(newColor);
     }
+  }
+
+  public static boolean isUserLoggedIn(Context context)
+  {
+    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+
+    return sharedPreferences.getBoolean(context.getString(R.string.shared_pref_user_logged_in_key), false);
   }
 }
