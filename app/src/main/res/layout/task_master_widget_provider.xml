@@ -1,0 +1,99 @@
+<!--
+     The widget that is displayed on the home screen.
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFFFF"
+    android:orientation="vertical">
+
+    <!--
+         App Widget Toolbar
+
+         Note: Normally you would specify ?attr/actionBarSize for the toolbar height however the
+               widget will complain so you will need to use an explicit value.
+    -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@color/colorPrimary">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:text="@string/widget_title_string"
+            android:textColor="#FFFFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            tools:text="@string/widget_title_string"/>
+    </LinearLayout>
+
+    <!--
+         Container for the list due dates displayed within the widget.
+
+         Note: The user must be logged in for the due dates in order to have the due dates
+               displayed.
+    -->
+    <GridView
+        android:id="@+id/gv_due_date_widget"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:numColumns="1"/>
+
+    <!--
+         The layout that is displayed when the due date database is empty.
+    -->
+    <RelativeLayout
+        android:id="@+id/empty_widget"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginBottom="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:text="@string/widget_empty_database_error_string"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            tools:text="@string/widget_empty_database_error_string"/>
+    </RelativeLayout>
+
+    <!--
+         The layout that is displayed when the user is not logged in.
+    -->
+    <RelativeLayout
+        android:id="@+id/sign_in_widget"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/button_log_in_widget"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginBottom="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:text="@string/widget_log_in_button_string"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            tools:text="@string/widget_log_in_button_string"/>
+    </RelativeLayout>
+
+</LinearLayout>
