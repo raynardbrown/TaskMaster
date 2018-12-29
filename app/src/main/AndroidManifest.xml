@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.android.taskmaster">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.example.android.taskmaster">
 
     <application
         android:allowBackup="true"
@@ -13,15 +12,19 @@
 
         <!-- Main Activity -->
         <activity
-            android:name=".view.WelcomeActivity"
+            android:name=".view.MainActivity"
             android:launchMode="singleTop">
             <intent-filter>
-                <action
-                    android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.MAIN"/>
 
-                <category
-                    android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+        </activity>
+
+        <!-- Main Activity if the user is not logged in -->
+        <activity
+            android:name=".view.WelcomeActivity"
+            android:launchMode="singleTop">
         </activity>
 
         <!-- Child of WelcomeActivity -->
@@ -29,7 +32,6 @@
             android:name=".view.SignUpActivity"
             android:launchMode="singleTop"
             android:parentActivityName=".view.WelcomeActivity">
-
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".view.WelcomeActivity"/>
@@ -40,15 +42,9 @@
             android:name=".view.LogInActivity"
             android:launchMode="singleTop"
             android:parentActivityName=".view.WelcomeActivity">
-
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".view.WelcomeActivity"/>
-        </activity>
-
-        <activity
-            android:name=".view.MainActivity"
-            android:launchMode="singleTop">
         </activity>
 
         <!-- Child of MainActivity -->
@@ -56,7 +52,6 @@
             android:name=".view.TaskGroupActivity"
             android:launchMode="singleTop"
             android:parentActivityName=".view.MainActivity">
-
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".view.MainActivity"/>
@@ -67,11 +62,26 @@
             android:name=".view.CardDetailActivity"
             android:launchMode="singleTop"
             android:parentActivityName=".view.TaskGroupActivity">
-
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".view.TaskGroupActivity"/>
         </activity>
+
+        <!-- Widget Provider -->
+        <receiver android:name=".view.widget.TaskMasterWidgetProvider">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/task_master_widget_provider_info"/>
+        </receiver>
+
+        <!-- Widget Remote Views Service -->
+        <service
+            android:name=".view.widget.TaskMasterGridWidgetService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"/>
     </application>
 
 </manifest>
