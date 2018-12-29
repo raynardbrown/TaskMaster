@@ -16,7 +16,14 @@ public class WelcomeActivity extends AppCompatActivity
 
   public static Intent getStartIntent(Context context)
   {
-    return new Intent(context, WelcomeActivity.class);
+    Intent intent = new Intent(context, WelcomeActivity.class);
+
+    // Also clear the back stack
+    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
+            Intent.FLAG_ACTIVITY_CLEAR_TASK  |
+            Intent.FLAG_ACTIVITY_NEW_TASK);
+
+    return intent;
   }
 
   @Override
