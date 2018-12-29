@@ -1,9 +1,13 @@
 package com.example.android.taskmaster.view;
 
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
 import android.os.Parcelable;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -17,8 +21,10 @@ import com.example.android.taskmaster.R;
 import com.example.android.taskmaster.databinding.ActivityMainBinding;
 import com.example.android.taskmaster.model.TaskGroupModel;
 import com.example.android.taskmaster.utils.TaskMasterConstants;
+import com.example.android.taskmaster.utils.TaskMasterUtils;
 import com.example.android.taskmaster.view.dialog.CreateGroupDialogFragment;
 import com.example.android.taskmaster.view.dialog.ICreateGroupDialogListener;
+import com.example.android.taskmaster.view.widget.TaskMasterWidgetProvider;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,7 +41,14 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
 
   public static Intent getStartIntent(Context context)
   {
-    return new Intent(context, MainActivity.class);
+    Intent intent = new Intent(context, MainActivity.class);
+
+    // Also clear the back stack
+    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
+            Intent.FLAG_ACTIVITY_CLEAR_TASK  |
+            Intent.FLAG_ACTIVITY_NEW_TASK);
+
+    return intent;
   }
 
   @Override
@@ -46,29 +59,34 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
 
     if(savedInstanceState == null)
     {
-      taskGroupList = new ArrayList<>();
+      if(!TaskMasterUtils.isUserLoggedIn(this))
+      {
+        finish();
 
-      fetchRemoteData();
+        Intent intent = WelcomeActivity.getStartIntent(this);
+        startActivity(intent);
+      }
+      else
+      {
+        // we are logged in
+        taskGroupList = new ArrayList<>();
+
+        fetchRemoteData();
+
+        postActivityLogInSetup();
+
+        // Notify the widget that we are logged in
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
+        int[] appWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(this, TaskMasterWidgetProvider.class));
+        TaskMasterWidgetProvider.updateTaskMasterWidgets(this, appWidgetManager, appWidgetIds);
+      }
     }
     else
     {
       taskGroupList = savedInstanceState.getParcelableArrayList(getString(R.string.task_group_list_key));
+
+      postActivityLogInSetup();
     }
-
-    // set up the toolbar
-    setSupportActionBar(binding.tbMainActivity);
-
-    ActionBar actionBar = getSupportActionBar();
-    if(actionBar != null)
-    {
-      actionBar.setTitle(getString(R.string.main_activity_title_string));
-    }
-
-    registerClickHandler();
-
-    setupRecyclerView();
-
-    refreshRecyclerViewVisibilityState();
   }
 
   @Override
@@ -106,34 +124,6 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
     }
   }
 
-  private void registerClickHandler()
-  {
-    binding.fabMainActivityCreateGroup.setOnClickListener(new CreateGroupFabClickHandler());
-  }
-
-  private void setupRecyclerView()
-  {
-    LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-    binding.rvMainActivity.setLayoutManager(layoutManager);
-
-    adapter = new TaskGroupListAdapter(taskGroupList, this);
-    binding.rvMainActivity.setAdapter(adapter);
-  }
-
-  private void refreshRecyclerViewVisibilityState()
-  {
-    if(taskGroupList.isEmpty())
-    {
-      binding.rvMainActivity.setVisibility(View.INVISIBLE);
-      binding.tvErrorMainActivityNoTaskGroups.setVisibility(View.VISIBLE);
-    }
-    else
-    {
-      binding.tvErrorMainActivityNoTaskGroups.setVisibility(View.INVISIBLE);
-      binding.rvMainActivity.setVisibility(View.VISIBLE);
-    }
-  }
-
   @Override
   public void onTaskGroupListItemClick(int index)
   {
@@ -164,6 +154,75 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
     refreshRecyclerViewVisibilityState();
   }
 
+  private void registerClickHandler()
+  {
+    binding.fabMainActivityCreateGroup.setOnClickListener(new CreateGroupFabClickHandler());
+  }
+
+  private void setupRecyclerView()
+  {
+    LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+    binding.rvMainActivity.setLayoutManager(layoutManager);
+
+    adapter = new TaskGroupListAdapter(taskGroupList, this);
+    binding.rvMainActivity.setAdapter(adapter);
+  }
+
+  private void refreshRecyclerViewVisibilityState()
+  {
+    if(taskGroupList.isEmpty())
+    {
+      binding.rvMainActivity.setVisibility(View.INVISIBLE);
+      binding.tvErrorMainActivityNoTaskGroups.setVisibility(View.VISIBLE);
+    }
+    else
+    {
+      binding.tvErrorMainActivityNoTaskGroups.setVisibility(View.INVISIBLE);
+      binding.rvMainActivity.setVisibility(View.VISIBLE);
+    }
+  }
+
+  private void postActivityLogInSetup()
+  {
+    // set up the toolbar
+    setSupportActionBar(binding.tbMainActivity);
+
+    ActionBar actionBar = getSupportActionBar();
+    if(actionBar != null)
+    {
+      actionBar.setTitle(getString(R.string.main_activity_title_string));
+    }
+
+    registerClickHandler();
+
+    setupRecyclerView();
+
+    refreshRecyclerViewVisibilityState();
+  }
+
+  private void fetchRemoteData()
+  {
+    // TODO: Grab the task groups from the database
+
+    // TODO: Refresh the recycler view visibility state too
+  }
+
+  private void logoutHandler()
+  {
+    // TODO: Actually log out
+
+    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+    SharedPreferences.Editor editor = sharedPreferences.edit();
+
+    editor.putBoolean(getString(R.string.shared_pref_user_logged_in_key), false);
+    editor.apply();
+
+    // Start the welcome activity since we are logged out
+    finish();
+    Intent intent = WelcomeActivity.getStartIntent(this);
+    startActivity(intent);
+  }
+
   class SortByTaskName implements Comparator<TaskGroupModel>
   {
     public int compare(TaskGroupModel a, TaskGroupModel b)
@@ -180,17 +239,5 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
       // Show the create group dialog
       CreateGroupDialogFragment.newInstance().show(getSupportFragmentManager());
     }
-  }
-
-  private void fetchRemoteData()
-  {
-    // TODO: Grab the task groups from the database
-
-    // TODO: Refresh the recycler view visibility state too
-  }
-
-  private void logoutHandler()
-  {
-    // TODO: Actually log out
   }
 }
