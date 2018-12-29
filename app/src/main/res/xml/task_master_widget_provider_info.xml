@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:initialKeyguardLayout="@layout/task_master_widget_provider"
+                    android:initialLayout="@layout/task_master_widget_provider"
+                    android:minHeight="40dp"
+                    android:minWidth="40dp"
+                    android:previewImage="@drawable/due_date_app_widget_preview"
+                    android:resizeMode="horizontal|vertical"
+                    android:updatePeriodMillis="86400000"
+                    android:widgetCategory="home_screen">
+</appwidget-provider>
