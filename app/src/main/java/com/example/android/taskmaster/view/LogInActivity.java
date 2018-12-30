@@ -5,12 +5,14 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -19,9 +21,17 @@ import com.example.android.taskmaster.databinding.ActivityLogInBinding;
 import com.example.android.taskmaster.utils.InputValidator;
 import com.example.android.taskmaster.view.dialog.ForgotPasswordDialogFragment;
 import com.example.android.taskmaster.view.dialog.IForgotPasswordDialogListener;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 
 public class LogInActivity extends AppCompatActivity implements IForgotPasswordDialogListener
 {
+  private static final String TAG = LogInActivity.class.getSimpleName();
+
   private ActivityLogInBinding binding;
 
   /**
@@ -102,10 +112,58 @@ public class LogInActivity extends AppCompatActivity implements IForgotPasswordD
   }
 
   @Override
-  public void onSendPasswordClick(String emailAddress)
+  public void onSendPasswordClick(final String emailAddress)
   {
-    // TODO: Actually send the password request
-    Toast.makeText(this, emailAddress, Toast.LENGTH_LONG).show();
+    FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+
+    // show progress bar
+    binding.progressBarLogInActivity.setVisibility(View.VISIBLE);
+
+    firebaseAuth.sendPasswordResetEmail(emailAddress)
+            .addOnCompleteListener(new OnCompleteListener<Void>()
+            {
+              @Override
+              public void onComplete(@NonNull Task<Void> task)
+              {
+                if(task.isSuccessful())
+                {
+                  // hide progress bar
+                  binding.progressBarLogInActivity.setVisibility(View.GONE);
+
+                  Toast.makeText(LogInActivity.this,
+                          String.format(getString(R.string.firebase_password_sent_success), emailAddress),
+                          Toast.LENGTH_LONG).show();
+                }
+                else
+                {
+                  // password reset failed
+
+                  // hide progress bar
+                  binding.progressBarLogInActivity.setVisibility(View.GONE);
+
+                  Exception exception = task.getException();
+
+                  if(exception != null)
+                  {
+                    try
+                    {
+                      throw exception;
+                    }
+                    catch(FirebaseAuthInvalidUserException e)
+                    {
+                      binding.tilLogInActivityEmailAddress.setError(getString(R.string.error_firebase_reset_password_failed_email_invalid_string));
+                      binding.tilLogInActivityEmailAddress.requestFocus();
+                    }
+                    catch(Exception e)
+                    {
+                      Toast.makeText(LogInActivity.this,
+                              getString(R.string.error_firebase_reset_password_failed),
+                              Toast.LENGTH_LONG).show();
+                    }
+                  }
+                }
+              }
+            });
   }
 
   class EmailAddressFieldWatcher implements TextWatcher
@@ -225,22 +283,67 @@ public class LogInActivity extends AppCompatActivity implements IForgotPasswordD
 
       if(emailFieldIsValid && passwordFieldIsValid)
       {
-        // TODO: trigger log in and show progress
-        // TODO: for now fake the login and start the main activity for testing
+        final FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(LogInActivity.this);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
+        // show progress bar
+        binding.progressBarLogInActivity.setVisibility(View.VISIBLE);
 
-        editor.putBoolean(getString(R.string.shared_pref_user_logged_in_key), true);
-        editor.apply();
+        firebaseAuth.signInWithEmailAndPassword(emailString, passwordString)
+                .addOnCompleteListener(new OnCompleteListener<AuthResult>()
+                {
+                  @Override
+                  public void onComplete(@NonNull Task<AuthResult> task)
+                  {
+                    // hide progress bar
+                    binding.progressBarLogInActivity.setVisibility(View.GONE);
 
-        Intent intent = MainActivity.getStartIntent(LogInActivity.this);
+                    if(task.isSuccessful())
+                    {
+                      SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(LogInActivity.this);
+                      SharedPreferences.Editor editor = sharedPreferences.edit();
 
-        startActivity(intent);
+                      editor.putBoolean(getString(R.string.shared_pref_user_logged_in_key), true);
+                      editor.apply();
 
-        // TODO: We are logged in we no logger need to go back to this activity. Move this to the
-        //       part of the code that handles log in success.
-        finish();
+                      Intent intent = MainActivity.getStartIntent(LogInActivity.this);
+
+                      startActivity(intent);
+
+                      // We are logged in we no logger need to go back to this activity.
+                      finish();
+                    }
+                    else
+                    {
+                      Exception exception = task.getException();
+
+                      if(exception != null)
+                      {
+                        Log.w(LogInActivity.TAG, "signInWithEmailAndPassword: failed: ", exception);
+
+                        try
+                        {
+                          throw exception;
+                        }
+                        catch(FirebaseAuthInvalidUserException e)
+                        {
+                          binding.tilLogInActivityEmailAddress.setError(getString(R.string.error_firebase_log_in_failed_email_invalid_string));
+                          binding.tilLogInActivityEmailAddress.requestFocus();
+                        }
+                        catch(FirebaseAuthInvalidCredentialsException e)
+                        {
+                          binding.tilLogInActivityPassword.setError(getString(R.string.error_firebase_log_in_failed_password_invalid_string));
+                          binding.tilLogInActivityPassword.requestFocus();
+                        }
+                        catch(Exception e)
+                        {
+                          Toast.makeText(LogInActivity.this,
+                                  getString(R.string.error_firebase_log_in_failed),
+                                  Toast.LENGTH_LONG).show();
+                        }
+                      }
+                    }
+                  }
+                });
       }
     }
   } // end class LogInClickHandler
