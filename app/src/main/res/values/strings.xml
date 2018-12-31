@@ -249,4 +249,22 @@
          Shared Preferences Strings
     -->
     <string name="shared_pref_user_logged_in_key" translatable="false">shared_pref_user_logged_in</string>
+
+    <!--
+         Firebase strings
+    -->
+    <string name="firebase_password_sent_success" translatable="true">Password reset sent to: %1$s</string>
+    <string name="error_firebase_create_account_failed" translatable="true">Account creation failed!</string>
+    <string name="error_firebase_log_in_failed" translatable="true">Log in failed!</string>
+    <string name="error_firebase_reset_password_failed" translatable="true">Password reset failed!</string>
+    <string name="error_firebase_create_account_failed_email_invalid_string" translatable="true">Account creation failed: invalid email</string>
+    <string name="error_firebase_log_in_failed_email_invalid_string" translatable="true">Log in failed: invalid email</string>
+    <string name="error_firebase_log_in_failed_password_invalid_string" translatable="true">Log in failed: invalid password</string>
+    <string name="error_firebase_reset_password_failed_email_invalid_string" translatable="true">Password reset failed: invalid email</string>
+    <string name="error_firebase_create_account_failed_email_exists_string" translatable="true">Account creation failed: email exists</string>
+
+    <string name="db_task_group_object" translatable="false">task_group</string>
+    <string name="db_task_group_object_title" translatable="false">title</string>
+    <string name="db_task_group_object_color_key" translatable="false">colorKey</string>
+    <string name="db_task_group_user" translatable="false">task_group_user</string>
 </resources>
