@@ -9,6 +9,11 @@ public class TaskGroupModel implements Parcelable
   private String title;
   private int colorKey;
 
+  private TaskGroupModel()
+  {
+    // firebase requires a model have a default constructor that takes no arguments
+  }
+
   public TaskGroupModel(String id, String title, int colorKey)
   {
     this.id = id;
