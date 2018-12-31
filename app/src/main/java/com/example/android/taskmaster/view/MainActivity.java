@@ -12,6 +12,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -25,11 +26,19 @@ import com.example.android.taskmaster.utils.TaskMasterUtils;
 import com.example.android.taskmaster.view.dialog.CreateGroupDialogFragment;
 import com.example.android.taskmaster.view.dialog.ICreateGroupDialogListener;
 import com.example.android.taskmaster.view.widget.TaskMasterWidgetProvider;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements ITaskGroupListItemClickListener,
@@ -45,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
 
     // Also clear the back stack
     intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
-            Intent.FLAG_ACTIVITY_CLEAR_TASK  |
+            Intent.FLAG_ACTIVITY_CLEAR_TASK |
             Intent.FLAG_ACTIVITY_NEW_TASK);
 
     return intent;
@@ -71,14 +80,14 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
         // we are logged in
         taskGroupList = new ArrayList<>();
 
-        fetchRemoteData();
-
+        // We must set up all the UI components before fetching data since the fetching mechanism
+        // has dependencies on the initialized UI components.
         postActivityLogInSetup();
 
+        fetchRemoteData();
+
         // Notify the widget that we are logged in
-        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
-        int[] appWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(this, TaskMasterWidgetProvider.class));
-        TaskMasterWidgetProvider.updateTaskMasterWidgets(this, appWidgetManager, appWidgetIds);
+        notifyWidget();
       }
     }
     else
@@ -109,7 +118,7 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
   @Override
   public boolean onOptionsItemSelected(MenuItem item)
   {
-    switch (item.getItemId())
+    switch(item.getItemId())
     {
       case R.id.action_log_out:
       {
@@ -146,12 +155,64 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
     // The list must be displayed sorted by task name
     Collections.sort(taskGroupList, new SortByTaskName());
 
-    // TODO: Add the new task group to the database too
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
+    DatabaseReference rootDatabaseReference = database.getReference();
 
-    // Refresh the recycler view
-    adapter.notifyDataSetChanged();
+    // table/object
+    final String taskGroupPrimaryKey = taskGroupModel.getId();
 
-    refreshRecyclerViewVisibilityState();
+    Map<String, Object> childUpdates = new HashMap<>();
+
+    FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+
+    if(firebaseAuth.getCurrentUser() != null) // TODO: Handle null which means not logged in (Go back to the welcome activity?)
+    {
+      String currentUserEmailAddress = firebaseAuth.getCurrentUser().getEmail();
+
+      // Handle null which means no email associated with the user.
+      // This should never happen since if we are logged in, we have an email address.
+      if(currentUserEmailAddress != null)
+      {
+        // Firebase does not allow a key to contain a period "."
+        String firebaseSafeEmailKey = currentUserEmailAddress.replace(".", ",");
+
+        String taskGroupModelRoot = String.format("/%s/%s/", getString(R.string.db_task_group_object), taskGroupPrimaryKey);
+
+        String taskGroupModelUserRoot = String.format("/%s/%s/%s", getString(R.string.db_task_group_user), firebaseSafeEmailKey, taskGroupPrimaryKey);
+
+        childUpdates.put(taskGroupModelRoot + getString(R.string.db_task_group_object_title),
+                taskGroupModel.getTitle());
+
+        childUpdates.put(taskGroupModelRoot + getString(R.string.db_task_group_object_color_key),
+                taskGroupModel.getColorKey());
+
+        // Link the task group to a user
+        childUpdates.put(taskGroupModelUserRoot, true);
+
+        rootDatabaseReference.updateChildren(childUpdates, new DatabaseReference.CompletionListener()
+        {
+          @Override
+          public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+          {
+            if(databaseError == null)
+            {
+              // write success
+              Log.i("MainAct", "wrote task group to database");
+            }
+            else
+            {
+              // write failure
+              Log.i("MainAct", "failed to write task group to database");
+            }
+          }
+        });
+
+        // Refresh the recycler view
+        adapter.notifyDataSetChanged();
+
+        refreshRecyclerViewVisibilityState();
+      }
+    }
   }
 
   private void registerClickHandler()
@@ -202,14 +263,55 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
 
   private void fetchRemoteData()
   {
-    // TODO: Grab the task groups from the database
+    DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
 
-    // TODO: Refresh the recycler view visibility state too
+    FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+
+    if(firebaseAuth.getCurrentUser() != null) // TODO: Handle null which means not logged in (Go back to the welcome activity?)
+    {
+      String currentUserEmailAddress = firebaseAuth.getCurrentUser().getEmail();
+
+      // Handle null which means no email associated with the user.
+      // This should never happen since if we are logged in, we have an email address.
+      if(currentUserEmailAddress != null)
+      {
+        // Firebase does not allow a key to contain a period "."
+        String firebaseSafeEmailKey = currentUserEmailAddress.replace(".", ",");
+
+        // Grab all the task group id where the current user is a member
+        databaseReference.child(getString(R.string.db_task_group_user)).child(firebaseSafeEmailKey)
+                .addListenerForSingleValueEvent(new ValueEventListener()
+                {
+                  @Override
+                  public void onDataChange(DataSnapshot dataSnapshot)
+                  {
+                    for(DataSnapshot taskGroupUserSnapshot : dataSnapshot.getChildren())
+                    {
+                      // the value is a boolean which we do not care about
+                      String taskGroupId = taskGroupUserSnapshot.getKey();
+
+                      DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
+
+                      // grab all the task groups associated with the specified task group id
+                      databaseReference.child(getString(R.string.db_task_group_object)).child(taskGroupId)
+                              .addListenerForSingleValueEvent(new TaskGroupValueEventListener(taskGroupId));
+                    }
+                  }
+
+                  @Override
+                  public void onCancelled(DatabaseError databaseError)
+                  {
+                    Log.i("MainAct", "failed to get task group id from database");
+                  }
+                });
+      }
+    }
   }
 
   private void logoutHandler()
   {
-    // TODO: Actually log out
+    FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+    firebaseAuth.signOut();
 
     SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -217,10 +319,20 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
     editor.putBoolean(getString(R.string.shared_pref_user_logged_in_key), false);
     editor.apply();
 
+    // Notify the widget that we are logged out
+    notifyWidget();
+
     // Start the welcome activity since we are logged out
     finish();
     Intent intent = WelcomeActivity.getStartIntent(this);
     startActivity(intent);
+  }
+
+  private void notifyWidget()
+  {
+    AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
+    int[] appWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(this, TaskMasterWidgetProvider.class));
+    TaskMasterWidgetProvider.updateTaskMasterWidgets(this, appWidgetManager, appWidgetIds);
   }
 
   class SortByTaskName implements Comparator<TaskGroupModel>
@@ -228,6 +340,49 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
     public int compare(TaskGroupModel a, TaskGroupModel b)
     {
       return a.getTitle().compareTo(b.getTitle());
+    }
+  }
+
+  class TaskGroupValueEventListener implements ValueEventListener
+  {
+    private String taskGroupId;
+
+    TaskGroupValueEventListener(String taskGroupId)
+    {
+      this.taskGroupId = taskGroupId;
+    }
+
+    @Override
+    public void onDataChange(DataSnapshot taskGroupSnapshot)
+    {
+      String taskGroupTitle = taskGroupSnapshot.child(getString(R.string.db_task_group_object_title)).getValue(String.class);
+
+      // Must use Long.class and not String.class or you get the following exception
+      // com.google.firebase.database.DatabaseException: Failed to convert value of type java.lang.Long to String
+      //
+      // Remember the type must match what you passed to the Map which was then passed to
+      // DatabaseReference.updateChildren
+      Long taskGroupColorKeyLong = taskGroupSnapshot.child(getString(R.string.db_task_group_object_color_key)).getValue(Long.class);
+
+      int taskGroupColorKey = taskGroupColorKeyLong != null ? taskGroupColorKeyLong.intValue() : 0;
+
+      taskGroupList.add(new TaskGroupModel(taskGroupId,
+              taskGroupTitle,
+              taskGroupColorKey));
+
+      // The list must be displayed sorted by task name
+      Collections.sort(taskGroupList, new SortByTaskName());
+
+      adapter.notifyDataSetChanged();
+
+      // Refresh the recycler view visibility state too
+      refreshRecyclerViewVisibilityState();
+    }
+
+    @Override
+    public void onCancelled(DatabaseError databaseError)
+    {
+      Log.i("MainAct", "failed to get task group from database");
     }
   }
 
