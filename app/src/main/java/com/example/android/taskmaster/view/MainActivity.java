@@ -99,6 +99,29 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
   }
 
   @Override
+  protected void onResume()
+  {
+    super.onResume();
+
+    // We need to override this function to handle coming back to this activity from the child
+    // activity.
+
+    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+    if(sharedPreferences.getBoolean(getString(R.string.shared_pref_app_state_changed_key), false))
+    {
+      // Don't forget the clear the state
+      SharedPreferences.Editor editor = sharedPreferences.edit();
+      editor.putBoolean(getString(R.string.shared_pref_app_state_changed_key), false);
+      editor.apply();
+
+      taskGroupList.clear();
+
+      fetchRemoteData();
+    }
+  }
+
+  @Override
   protected void onSaveInstanceState(Bundle outState)
   {
     super.onSaveInstanceState(outState);
