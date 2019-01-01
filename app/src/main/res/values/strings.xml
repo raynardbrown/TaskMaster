@@ -249,6 +249,7 @@
          Shared Preferences Strings
     -->
     <string name="shared_pref_user_logged_in_key" translatable="false">shared_pref_user_logged_in</string>
+    <string name="shared_pref_app_state_changed_key" translatable="false">shared_pref_app_state_changed</string>
 
     <!--
          Firebase strings
@@ -267,4 +268,14 @@
     <string name="db_task_group_object_title" translatable="false">title</string>
     <string name="db_task_group_object_color_key" translatable="false">colorKey</string>
     <string name="db_task_group_user" translatable="false">task_group_user</string>
+    <string name="db_task_list_object" translatable="false">task_list</string>
+    <string name="db_task_list_index_key" translatable="false">taskIndex</string>
+    <string name="db_task_list_title_key" translatable="false">title</string>
+    <string name="db_task_group_task_list_key" translatable="false">task_group_task_list</string>
+    <string name="db_task_list_card_object_key" translatable="false">task_list_card</string>
+    <string name="db_task_list_card_title_key" translatable="false">cardTitle</string>
+    <string name="db_task_list_card_detailed_description_key" translatable="false">cardDetailedDescription</string>
+    <string name="db_task_list_card_index_key" translatable="false">cardIndex</string>
+    <string name="db_task_list_card_task_index_key" translatable="false">taskIndex</string>
+    <string name="db_task_list_task_list_card_key" translatable="false">task_list_task_list_card</string>
 </resources>
