@@ -2,11 +2,13 @@ package com.example.android.taskmaster.view;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Parcelable;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -14,6 +16,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.DragEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -33,9 +36,16 @@ import com.example.android.taskmaster.view.dialog.IAddCardDialogListener;
 import com.example.android.taskmaster.view.dialog.IAddTaskListDialogListener;
 import com.example.android.taskmaster.view.dialog.IChooseBackgroundDialogListener;
 import com.example.android.taskmaster.view.dialog.IMoveTaskListDialogListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class TaskGroupActivity extends AppCompatActivity implements IChooseBackgroundDialogListener,
@@ -80,6 +90,8 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
 
       taskListList = new ArrayList<>();
 
+      postUiInitialization();
+
       fetchRemoteData();
     }
     else
@@ -89,20 +101,9 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
       taskGroupModelList = savedInstanceState.getParcelableArrayList(getString(R.string.task_group_model_object_list_key));
 
       taskListList = savedInstanceState.getParcelableArrayList(getString(R.string.task_list_model_container_object_list_key));
+
+      postUiInitialization();
     }
-
-    // set up the toolbar
-    setSupportActionBar(binding.tbTaskGroupActivity);
-
-    ActionBar actionBar = getSupportActionBar();
-    if(actionBar != null)
-    {
-      actionBar.setDisplayHomeAsUpEnabled(true);
-
-      actionBar.setTitle(taskGroupModel.getTitle());
-    }
-
-    setupRecyclerView();
   }
 
   @Override
@@ -130,7 +131,7 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
   @Override
   public boolean onOptionsItemSelected(MenuItem item)
   {
-    switch (item.getItemId())
+    switch(item.getItemId())
     {
       case R.id.action_background_color:
       {
@@ -157,48 +158,48 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
   @Override
   public void onBackgroundSelected(int colorId)
   {
-    ActionBar actionBar = getSupportActionBar();
-
-    switch(colorId)
-    {
-      case TaskMasterConstants.RED_BACKGROUND:
-      {
-        if(actionBar != null)
-        {
-          TaskMasterUtils.setStatusBarColorHelper(getWindow(), getResources().getColor(R.color.task_dark_red));
-          actionBar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.task_red)));
-          binding.clTaskGroupActivityRoot.setBackgroundColor(getResources().getColor(R.color.task_light_red));
-        }
-        break;
-      }
-
-      case TaskMasterConstants.GREEN_BACKGROUND:
-      {
-        if(actionBar != null)
-        {
-          TaskMasterUtils.setStatusBarColorHelper(getWindow(), getResources().getColor(R.color.task_dark_green));
-          actionBar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.task_green)));
-          binding.clTaskGroupActivityRoot.setBackgroundColor(getResources().getColor(R.color.task_light_green));
-        }
-        break;
-      }
-
-      case TaskMasterConstants.INDIGO_BACKGROUND:
-      {
-        if(actionBar != null)
-        {
-          TaskMasterUtils.setStatusBarColorHelper(getWindow(), getResources().getColor(R.color.task_dark_indigo));
-          actionBar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.task_indigo)));
-          binding.clTaskGroupActivityRoot.setBackgroundColor(getResources().getColor(R.color.task_light_indigo));
-        }
-        break;
-      }
-    }
+    setActivityColorTheme(colorId);
 
     // Update the task group
     taskGroupModel.setColorKey(colorId);
 
-    // TODO: Update the database
+    // Update the database
+
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
+    DatabaseReference rootDatabaseReference = database.getReference();
+
+    final String taskGroupPrimaryKey = taskGroupModel.getId();
+
+    String taskGroupModelRoot = String.format("/%s/%s/", getString(R.string.db_task_group_object), taskGroupPrimaryKey);
+
+    Map<String, Object> childUpdates = new HashMap<>();
+
+    childUpdates.put(taskGroupModelRoot + getString(R.string.db_task_group_object_color_key),
+            taskGroupModel.getColorKey());
+
+    rootDatabaseReference.updateChildren(childUpdates, new DatabaseReference.CompletionListener()
+    {
+      @Override
+      public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+      {
+        if(databaseError == null)
+        {
+          // write success
+          Log.i("TaskGroupAct", "updated task group color in database");
+
+          SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(TaskGroupActivity.this);
+          SharedPreferences.Editor editor = sharedPreferences.edit();
+
+          editor.putBoolean(getString(R.string.shared_pref_app_state_changed_key), true);
+          editor.apply();
+        }
+        else
+        {
+          // write failure
+          Log.i("TaskGroupAct", "failed to update task group color in database");
+        }
+      }
+    });
   }
 
   @Override
@@ -221,10 +222,47 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
 
     taskListList.add(taskListModelContainer);
 
+    // Update the database
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
+    DatabaseReference rootDatabaseReference = database.getReference();
+
+    String taskListModelRoot = String.format("/%s/%s/", getString(R.string.db_task_list_object),
+            taskListModelContainer.getTaskListModel().getTaskListId());
+
+    String taskGroupTaskListRoot = String.format("/%s/%s/", getString(R.string.db_task_group_task_list_key), taskGroupModel.getId());
+
+    Map<String, Object> childUpdates = new HashMap<>();
+
+    childUpdates.put(taskListModelRoot + getString(R.string.db_task_list_index_key),
+            taskListList.size() - 1);
+
+    childUpdates.put(taskListModelRoot + getString(R.string.db_task_list_title_key),
+            taskListModel.getTitle());
+
+    // add the task list to the collection of task lists in the task_group_task_list
+    childUpdates.put(taskGroupTaskListRoot + taskListModel.getTaskListId(),
+            true);
+
+    rootDatabaseReference.updateChildren(childUpdates, new DatabaseReference.CompletionListener()
+    {
+      @Override
+      public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+      {
+        if(databaseError == null)
+        {
+          // write success
+          Log.i("TaskGroupAct", "wrote task list to database");
+        }
+        else
+        {
+          // write failure
+          Log.i("TaskGroupAct", "failed to write task list to database");
+        }
+      }
+    });
+
     // Notify the adapter
     adapter.notifyDataSetChanged();
-
-    // TODO: Update the database
   }
 
   @Override
@@ -267,9 +305,204 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
     binding.rvTaskGroupActivity.setOnDragListener(new TaskListDragListener());
   }
 
+  private void setActivityColorTheme(int colorId)
+  {
+    ActionBar actionBar = getSupportActionBar();
+
+    switch(colorId)
+    {
+      case TaskMasterConstants.RED_BACKGROUND:
+      {
+        if(actionBar != null)
+        {
+          TaskMasterUtils.setStatusBarColorHelper(getWindow(), getResources().getColor(R.color.task_dark_red));
+          actionBar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.task_red)));
+          binding.clTaskGroupActivityRoot.setBackgroundColor(getResources().getColor(R.color.task_light_red));
+        }
+        break;
+      }
+
+      case TaskMasterConstants.GREEN_BACKGROUND:
+      {
+        if(actionBar != null)
+        {
+          TaskMasterUtils.setStatusBarColorHelper(getWindow(), getResources().getColor(R.color.task_dark_green));
+          actionBar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.task_green)));
+          binding.clTaskGroupActivityRoot.setBackgroundColor(getResources().getColor(R.color.task_light_green));
+        }
+        break;
+      }
+
+      case TaskMasterConstants.INDIGO_BACKGROUND:
+      {
+        if(actionBar != null)
+        {
+          TaskMasterUtils.setStatusBarColorHelper(getWindow(), getResources().getColor(R.color.task_dark_indigo));
+          actionBar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.task_indigo)));
+          binding.clTaskGroupActivityRoot.setBackgroundColor(getResources().getColor(R.color.task_light_indigo));
+        }
+        break;
+      }
+    }
+  }
+
+  private void postUiInitialization()
+  {
+    // set up the toolbar
+    setSupportActionBar(binding.tbTaskGroupActivity);
+
+    ActionBar actionBar = getSupportActionBar();
+    if(actionBar != null)
+    {
+      actionBar.setDisplayHomeAsUpEnabled(true);
+
+      actionBar.setTitle(taskGroupModel.getTitle());
+    }
+
+    setActivityColorTheme(taskGroupModel.getColorKey());
+
+    setupRecyclerView();
+  }
+
   private void fetchRemoteData()
   {
-    // TODO: Grab the task lists from the database
+    // Grab the task lists from the database
+    DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
+
+    // Grab all the task list ids that are associated with the specified task group
+    databaseReference.child(getString(R.string.db_task_group_task_list_key)).child(taskGroupModel.getId())
+            .addListenerForSingleValueEvent(new ValueEventListener()
+            {
+              @Override
+              public void onDataChange(DataSnapshot dataSnapshot)
+              {
+                for(DataSnapshot taskGroupTaskListSnapshot : dataSnapshot.getChildren())
+                {
+                  // the value is a boolean which we do not care about
+                  String taskListId = taskGroupTaskListSnapshot.getKey();
+
+                  DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
+
+                  // grab the task list associated with the specified task list id
+                  databaseReference.child(getString(R.string.db_task_list_object)).child(taskListId)
+                          .addListenerForSingleValueEvent(new TaskListValueEventListener(taskListId));
+                }
+              }
+
+              @Override
+              public void onCancelled(DatabaseError databaseError)
+              {
+                Log.i("TaskGroupAct", "failed to get task list id from database");
+              }
+            });
+  }
+
+  class TaskListValueEventListener implements ValueEventListener
+  {
+    private String taskListId;
+
+    TaskListValueEventListener(String taskListId)
+    {
+      this.taskListId = taskListId;
+    }
+
+    @Override
+    public void onDataChange(DataSnapshot taskListSnapshot)
+    {
+      String taskListTitle = taskListSnapshot.child(getString(R.string.db_task_list_title_key)).getValue(String.class);
+
+      Long taskListIndexLong = taskListSnapshot.child(getString(R.string.db_task_list_index_key)).getValue(Long.class);
+
+      int taskListIndex = taskListIndexLong != null ? taskListIndexLong.intValue() : 0;
+
+      TaskListModel taskListModel = new TaskListModel(taskGroupModel.getId(), taskListId, taskListIndex, taskListTitle);
+
+      TaskListModelContainer container = new TaskListModelContainer(taskListModel, new ArrayList<TaskListCardModel>());
+
+      DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
+
+      // Grab all the task list card ids that are associated with the specified task list
+      databaseReference.child(getString(R.string.db_task_list_task_list_card_key)).child(taskListModel.getTaskListId())
+              .addListenerForSingleValueEvent(new ValueEventListener()
+              {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot)
+                {
+                  for(DataSnapshot taskListTaskListCardSnapshot : dataSnapshot.getChildren())
+                  {
+                    // the value is a boolean which we do not care about
+                    String taskListCardId = taskListTaskListCardSnapshot.getKey();
+
+                    DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
+
+                    // grab the task list card associated with the specified task list card id
+                    databaseReference.child(getString(R.string.db_task_list_card_object_key)).child(taskListCardId)
+                            .addListenerForSingleValueEvent(new TaskListCardValueEventListener(taskListCardId));
+                  }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError)
+                {
+                  Log.i("TaskGroupAct", "failed to get task list card id from database");
+                }
+              });
+
+      taskListList.add(container);
+
+      adapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onCancelled(DatabaseError databaseError)
+    {
+      Log.i("TaskGroupAct", "failed to get task list from database");
+    }
+  }
+
+  class TaskListCardValueEventListener implements ValueEventListener
+  {
+    private String taskListCardId;
+
+    TaskListCardValueEventListener(String taskListCardId)
+    {
+      this.taskListCardId = taskListCardId;
+    }
+
+    @Override
+    public void onDataChange(DataSnapshot taskListCardSnapshot)
+    {
+      String taskListCardTitle = taskListCardSnapshot.child(getString(R.string.db_task_list_card_title_key)).getValue(String.class);
+      String taskListCardDetailedDescription = taskListCardSnapshot.child(getString(R.string.db_task_list_card_detailed_description_key)).getValue(String.class);
+
+      Long cardIndexLong = taskListCardSnapshot.child(getString(R.string.db_task_list_card_index_key)).getValue(Long.class);
+
+      int cardIndex = cardIndexLong != null ? cardIndexLong.intValue() : 0;
+
+      Long taskIndexLong = taskListCardSnapshot.child(getString(R.string.db_task_list_card_task_index_key)).getValue(Long.class);
+
+      int taskIndex = taskIndexLong != null ? taskIndexLong.intValue() : 0;
+
+      TaskListCardModel taskListCardModel = new TaskListCardModel(taskGroupModel.getId(),
+              taskListList.get(taskIndex).getTaskListModel().getTaskListId(),
+              taskListCardId,
+              taskIndex,
+              taskListCardTitle,
+              taskListCardDetailedDescription,
+              cardIndex);
+
+      taskListList.get(taskIndex).getCardList().add(taskListCardModel);
+
+      // TODO: You still need to check for due dates, checklists, and attachments and set the appropriate icons
+
+      taskListList.get(taskIndex).getTaskListListAdapter().notifyDataSetChanged();
+    }
+
+    @Override
+    public void onCancelled(DatabaseError databaseError)
+    {
+      Log.i("TaskGroupAct", "failed to get task list card from database");
+    }
   }
 
   // https://stackoverflow.com/questions/32241948/how-can-i-control-the-scrolling-speed-of-recyclerview-smoothscrolltopositionpos
