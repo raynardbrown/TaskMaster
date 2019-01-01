@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
@@ -24,10 +25,15 @@ import com.example.android.taskmaster.view.dialog.AddTaskListDialogFragment;
 import com.example.android.taskmaster.view.dialog.IAddCardDialogListener;
 import com.example.android.taskmaster.view.dialog.MoveTaskListDialogFragment;
 import com.example.android.taskmaster.view.dialog.TaskGroupSpinnerItem;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -132,10 +138,53 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
 
     taskListCardModelList.add(taskListCardModel);
 
+    // Update the database
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
+    DatabaseReference rootDatabaseReference = database.getReference();
+
+    String taskListCardModelRoot = String.format("/%s/%s/", activity.getString(R.string.db_task_list_card_object_key), taskListCardModel.getCardId());
+
+    String taskListTaskListCardRoot = String.format("/%s/%s/", activity.getString(R.string.db_task_list_task_list_card_key), taskListCardModel.getTaskListId());
+
+    Map<String, Object> childUpdates = new HashMap<>();
+
+    childUpdates.put(taskListCardModelRoot + activity.getString(R.string.db_task_list_card_title_key),
+            taskListCardModel.getCardTitle());
+
+    childUpdates.put(taskListCardModelRoot + activity.getString(R.string.db_task_list_card_detailed_description_key),
+            taskListCardModel.getCardDetailedDescription());
+
+    childUpdates.put(taskListCardModelRoot + activity.getString(R.string.db_task_list_card_index_key),
+            taskListCardModel.getCardIndex());
+
+    childUpdates.put(taskListCardModelRoot + activity.getString(R.string.db_task_list_card_task_index_key),
+            taskListCardModel.getTaskIndex());
+
+    // add the task list card to the collection of task lists in the task_list_task_list_card
+
+    childUpdates.put(taskListTaskListCardRoot + taskListCardModel.getCardId(),
+            true);
+
+    rootDatabaseReference.updateChildren(childUpdates, new DatabaseReference.CompletionListener()
+            {
+              @Override
+              public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+              {
+                if(databaseError == null)
+                {
+                  // write success
+                  Log.i("TaskListAdap", "wrote task list card to database");
+                }
+                else
+                {
+                  // write failure
+                  Log.i("TaskListAdap", "failed to write task list card to database");
+                }
+              }
+            });
+
     // Notify the adapter
     taskListModelContainer.getTaskListListAdapter().notifyDataSetChanged();
-
-    // TODO: Update the database
   }
 
   /**
