@@ -82,6 +82,17 @@
         <service
             android:name=".view.widget.TaskMasterGridWidgetService"
             android:permission="android.permission.BIND_REMOTEVIEWS"/>
+
+        <!--
+             Permanently deactivate Analytics collection
+        -->
+        <meta-data android:name="firebase_analytics_collection_deactivated" android:value="true" />
+
+        <!--
+             Disable Advertising ID collection
+        -->
+        <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
+
     </application>
 
 </manifest>
