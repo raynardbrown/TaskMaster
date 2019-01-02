@@ -101,6 +101,8 @@ public class CardDetailActivity extends AppCompatActivity implements IDueDateDia
 
   private Drawable defaultCollapsingToolbarScrim;
 
+  private DueDateCheckChangeListener dueDateCheckChangeListener;
+
   public static Intent getStartIntent(Context context,
                                       String taskGroupTitle,
                                       String taskListTitle,
@@ -371,10 +373,11 @@ public class CardDetailActivity extends AppCompatActivity implements IDueDateDia
       }
     });
 
-    binding.cbCardDetailActivityDueDate.setOnCheckedChangeListener(new DueDateCheckChangeListener());
-
     if(dueDateModel == null)
     {
+      binding.cbCardDetailActivityDueDate.setOnCheckedChangeListener(null);
+      dueDateCheckChangeListener = null;
+
       binding.linearCardDetailActivityDueDateRow.setVisibility(View.GONE);
     }
     else
@@ -429,6 +432,9 @@ public class CardDetailActivity extends AppCompatActivity implements IDueDateDia
     if(date.isEmpty() || time.isEmpty())
     {
       // hide the due date text view row
+      binding.cbCardDetailActivityDueDate.setOnCheckedChangeListener(null);
+      dueDateCheckChangeListener = null;
+
       binding.linearCardDetailActivityDueDateRow.setVisibility(View.GONE);
 
       if(dueDateModel != null)
@@ -788,6 +794,12 @@ public class CardDetailActivity extends AppCompatActivity implements IDueDateDia
       binding.ivCardDetailActivityDueDate.setImageDrawable(drawable);
     }
 
+    if(dueDateCheckChangeListener == null)
+    {
+      dueDateCheckChangeListener = new DueDateCheckChangeListener();
+      binding.cbCardDetailActivityDueDate.setOnCheckedChangeListener(dueDateCheckChangeListener);
+    }
+
     binding.linearCardDetailActivityDueDateRow.setVisibility(View.VISIBLE);
     binding.tvCardDetailActivityDueDate.setText(formattedString);
 
@@ -901,8 +913,7 @@ public class CardDetailActivity extends AppCompatActivity implements IDueDateDia
 
                   dueDateModel = new DueDateModel(taskListCardModel.getCardId(), dueDate, completed);
 
-                  // Refresh the UI state, make sure the the due date is visible
-                  binding.linearCardDetailActivityDueDateRow.setVisibility(View.GONE);
+                  // Refresh the UI state
                   updateDueDateView(new Date(dueDateModel.getDueDate()));
                 }
               }
