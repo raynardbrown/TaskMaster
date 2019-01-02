@@ -44,6 +44,11 @@ import com.example.android.taskmaster.view.dialog.IChooseAttachmentDialogListene
 import com.example.android.taskmaster.view.dialog.IDeleteChecklistListener;
 import com.example.android.taskmaster.view.dialog.IDueDateDialogCancelListener;
 import com.example.android.taskmaster.view.dialog.IDueDateDialogListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.Format;
 import java.text.ParsePosition;
@@ -51,7 +56,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class CardDetailActivity extends AppCompatActivity implements IDueDateDialogListener,
@@ -130,6 +137,10 @@ public class CardDetailActivity extends AppCompatActivity implements IDueDateDia
       enableEditCommitMenu = false;
 
       indexOfAttachmentImageInToolbar = -1;
+
+      postUiInitialization();
+
+      fetchRemoteData();
     }
     else
     {
@@ -141,43 +152,14 @@ public class CardDetailActivity extends AppCompatActivity implements IDueDateDia
 
       dueDateModel = savedInstanceState.getParcelable(getString(R.string.due_date_model_object_key));
 
-      if(dueDateModel != null)
-      {
-        updateDueDateView(new Date(dueDateModel.getDueDate()));
-      }
-
       checklistList = savedInstanceState.getParcelableArrayList(getString(R.string.check_list_container_list_object_key));
 
       attachmentList = savedInstanceState.getParcelableArrayList(getString(R.string.attachment_creation_info_list_object_key));
 
       indexOfAttachmentImageInToolbar = savedInstanceState.getInt(getString(R.string.attachment_image_toolbar_index_key));
+
+      postUiInitialization();
     }
-
-    // set up the toolbar
-    setSupportActionBar(binding.tbCardDetailActivity);
-
-    ActionBar actionBar = getSupportActionBar();
-    if(actionBar != null)
-    {
-      actionBar.setDisplayHomeAsUpEnabled(true);
-
-      // set title in the meta bar too
-      binding.etToolbarCardName.setText(taskListCardModel.getCardTitle());
-
-      final String toolbarLocationString = String.format(getString(R.string.card_detail_activity_toolbar_location_format_string),
-              taskGroupTitle,
-              taskListTitle);
-
-      binding.tvToolbarCardLocationDetails.setText(toolbarLocationString);
-
-      // Only show the toolbar title when collapsed because we are using an edit text as our title
-      // in the action bar and we do not want the toolbar title and it to overlap
-      binding.appBarLayoutCardDetail.addOnOffsetChangedListener(new CardDetailAppbarOffsetChangedListener());
-    }
-
-    setupUi();
-
-    setupRecyclerViews();
   }
 
   @Override
@@ -380,12 +362,6 @@ public class CardDetailActivity extends AppCompatActivity implements IDueDateDia
 
   private void setupUi()
   {
-    // TODO: Check the database for due dates and enable accordingly
-    if(dueDateModel == null)
-    {
-      binding.linearCardDetailActivityDueDateRow.setVisibility(View.GONE);
-    }
-
     binding.tvCardDetailActivityDueDate.setOnClickListener(new View.OnClickListener()
     {
       @Override
@@ -395,36 +371,16 @@ public class CardDetailActivity extends AppCompatActivity implements IDueDateDia
       }
     });
 
-    binding.cbCardDetailActivityDueDate.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
+    binding.cbCardDetailActivityDueDate.setOnCheckedChangeListener(new DueDateCheckChangeListener());
+
+    if(dueDateModel == null)
     {
-      @Override
-      public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
-      {
-        if(isChecked)
-        {
-          // checked
-
-          Drawable drawable = TaskMasterUtils.setDrawableResColorRes(CardDetailActivity.this,
-                  R.drawable.ic_baseline_schedule_24px,
-                  R.color.due_date_completed);
-
-          binding.ivCardDetailActivityDueDate.setImageDrawable(drawable);
-        }
-        else
-        {
-          // not checked
-
-          // use the saved color
-          Drawable drawable = TaskMasterUtils.setDrawableResColorRes(CardDetailActivity.this,
-                  R.drawable.ic_baseline_schedule_24px,
-                  currentDueDateColorResId);
-
-          binding.ivCardDetailActivityDueDate.setImageDrawable(drawable);
-        }
-
-        // TODO: Update the database
-      }
-    });
+      binding.linearCardDetailActivityDueDateRow.setVisibility(View.GONE);
+    }
+    else
+    {
+      updateDueDateView(new Date(dueDateModel.getDueDate()));
+    }
 
     // remove the underline from the toolbar title, save the background too
     editTextToolbarTitleBackgroundSave = binding.etToolbarCardName.getBackground();
@@ -472,10 +428,35 @@ public class CardDetailActivity extends AppCompatActivity implements IDueDateDia
   {
     if(date.isEmpty() || time.isEmpty())
     {
-      dueDateModel = null;
-
       // hide the due date text view row
       binding.linearCardDetailActivityDueDateRow.setVisibility(View.GONE);
+
+      if(dueDateModel != null)
+      {
+        // Update the database by removing the due associated with this card
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference rootDatabaseReference = database.getReference().child(getString(R.string.db_due_date_object)).child(taskListCardModel.getCardId());
+
+        rootDatabaseReference.removeValue(new DatabaseReference.CompletionListener()
+        {
+          @Override
+          public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+          {
+            if(databaseError == null)
+            {
+              // write success
+              Log.i("CardDetailAct", "removed due date database");
+            }
+            else
+            {
+              // write failure
+              Log.i("CardDetailAct", "failed to remove due date from database");
+            }
+          }
+        });
+
+        dueDateModel = null;
+      }
     }
     else
     {
@@ -493,7 +474,38 @@ public class CardDetailActivity extends AppCompatActivity implements IDueDateDia
 
       updateDueDateView(dueDateObject);
 
-      // TODO: Update the database
+      // Update the database
+      FirebaseDatabase database = FirebaseDatabase.getInstance();
+      DatabaseReference rootDatabaseReference = database.getReference();
+
+      String dueDateRoot = String.format("/%s/%s/", getString(R.string.db_due_date_object),
+              taskListCardModel.getCardId());
+
+      Map<String, Object> childUpdates = new HashMap<>();
+
+      childUpdates.put(dueDateRoot + getString(R.string.db_due_date_due_date_key),
+              dueDateModel.getDueDate());
+
+      childUpdates.put(dueDateRoot + getString(R.string.db_due_date_completed_key),
+              dueDateModel.isCompleted());
+
+      rootDatabaseReference.updateChildren(childUpdates, new DatabaseReference.CompletionListener()
+      {
+        @Override
+        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+        {
+          if(databaseError == null)
+          {
+            // write success
+            Log.i("CardDetailAct", "wrote due date to database");
+          }
+          else
+          {
+            // write failure
+            Log.i("CardDetailAct", "failed to write due date to database");
+          }
+        }
+      });
     }
   }
 
@@ -835,6 +847,74 @@ public class CardDetailActivity extends AppCompatActivity implements IDueDateDia
     }
   }
 
+  private void postUiInitialization()
+  {
+    // set up the toolbar
+    setSupportActionBar(binding.tbCardDetailActivity);
+
+    ActionBar actionBar = getSupportActionBar();
+    if(actionBar != null)
+    {
+      actionBar.setDisplayHomeAsUpEnabled(true);
+
+      // set title in the meta bar too
+      binding.etToolbarCardName.setText(taskListCardModel.getCardTitle());
+
+      final String toolbarLocationString = String.format(getString(R.string.card_detail_activity_toolbar_location_format_string),
+              taskGroupTitle,
+              taskListTitle);
+
+      binding.tvToolbarCardLocationDetails.setText(toolbarLocationString);
+
+      // Only show the toolbar title when collapsed because we are using an edit text as our title
+      // in the action bar and we do not want the toolbar title and it to overlap
+      binding.appBarLayoutCardDetail.addOnOffsetChangedListener(new CardDetailAppbarOffsetChangedListener());
+    }
+
+    setupUi();
+
+    setupRecyclerViews();
+  }
+
+  private void fetchRemoteData()
+  {
+    // Grab the due date from the database if it exists
+    DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
+
+    databaseReference.child(getString(R.string.db_due_date_object)).child(taskListCardModel.getCardId())
+            .addListenerForSingleValueEvent(new ValueEventListener()
+            {
+              @Override
+              public void onDataChange(DataSnapshot dueDateSnapshot)
+              {
+                if(dueDateSnapshot.exists())
+                {
+                  Log.i("CardDetailAct", "got a due date the from database");
+
+                  Long dueDateLong = dueDateSnapshot.child(getString(R.string.db_due_date_due_date_key)).getValue(Long.class);
+
+                  long dueDate = dueDateLong != null ? dueDateLong : 0;
+
+                  Boolean completedBoolean = dueDateSnapshot.child(getString(R.string.db_due_date_completed_key)).getValue(Boolean.class);
+
+                  boolean completed = completedBoolean != null ? completedBoolean : false;
+
+                  dueDateModel = new DueDateModel(taskListCardModel.getCardId(), dueDate, completed);
+
+                  // Refresh the UI state, make sure the the due date is visible
+                  binding.linearCardDetailActivityDueDateRow.setVisibility(View.GONE);
+                  updateDueDateView(new Date(dueDateModel.getDueDate()));
+                }
+              }
+
+              @Override
+              public void onCancelled(DatabaseError databaseError)
+              {
+                Log.i("CardDetailAct", "failed to get a due date the from database");
+              }
+            });
+  }
+
   private void removeFocusFromEditText(EditText editText)
   {
     editText.setFocusableInTouchMode(false);
@@ -1052,6 +1132,70 @@ public class CardDetailActivity extends AppCompatActivity implements IDueDateDia
           handledToolbarUnfolding = true;
         }
       }
+    }
+  }
+
+  class DueDateCheckChangeListener implements CompoundButton.OnCheckedChangeListener
+  {
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+    {
+      if(isChecked)
+      {
+        // checked
+        Log.i("CardDetailAct", "onCheckedChanged isChecked: true");
+        Drawable drawable = TaskMasterUtils.setDrawableResColorRes(CardDetailActivity.this,
+                R.drawable.ic_baseline_schedule_24px,
+                R.color.due_date_completed);
+
+        binding.ivCardDetailActivityDueDate.setImageDrawable(drawable);
+
+        dueDateModel.setCompleted(true);
+      }
+      else
+      {
+        // not checked
+        Log.i("CardDetailAct", "onCheckedChanged isChecked: false");
+
+        // use the saved color
+        Drawable drawable = TaskMasterUtils.setDrawableResColorRes(CardDetailActivity.this,
+                R.drawable.ic_baseline_schedule_24px,
+                currentDueDateColorResId);
+
+        binding.ivCardDetailActivityDueDate.setImageDrawable(drawable);
+
+        dueDateModel.setCompleted(false);
+      }
+
+      // Update the check state in the database
+      FirebaseDatabase database = FirebaseDatabase.getInstance();
+      DatabaseReference rootDatabaseReference = database.getReference();
+
+      String dueDateRoot = String.format("/%s/%s/", getString(R.string.db_due_date_object),
+              taskListCardModel.getCardId());
+
+      Map<String, Object> childUpdates = new HashMap<>();
+
+      childUpdates.put(dueDateRoot + getString(R.string.db_due_date_completed_key),
+              dueDateModel.isCompleted());
+
+      rootDatabaseReference.updateChildren(childUpdates, new DatabaseReference.CompletionListener()
+      {
+        @Override
+        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+        {
+          if(databaseError == null)
+          {
+            // write success
+            Log.i("CardDetailAct", "updated due date completed state in database");
+          }
+          else
+          {
+            // write failure
+            Log.i("CardDetailAct", "failed to update due date completed statein database");
+          }
+        }
+      });
     }
   }
 }
