@@ -278,4 +278,7 @@
     <string name="db_task_list_card_index_key" translatable="false">cardIndex</string>
     <string name="db_task_list_card_task_index_key" translatable="false">taskIndex</string>
     <string name="db_task_list_task_list_card_key" translatable="false">task_list_task_list_card</string>
+    <string name="db_due_date_object" translatable="false">due_date</string>
+    <string name="db_due_date_due_date_key" translatable="false">dueDate</string>
+    <string name="db_due_date_completed_key" translatable="false">completed</string>
 </resources>
