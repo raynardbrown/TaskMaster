@@ -163,7 +163,7 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
     // add the task list card to the collection of task lists in the task_list_task_list_card
 
     childUpdates.put(taskListTaskListCardRoot + taskListCardModel.getCardId(),
-            true);
+            taskListCardModel.getCardIndex());
 
     rootDatabaseReference.updateChildren(childUpdates, new DatabaseReference.CompletionListener()
             {
