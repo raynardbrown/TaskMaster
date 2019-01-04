@@ -5,10 +5,10 @@ import android.os.Parcelable;
 
 public class TaskListModel implements Parcelable
 {
-  private final String taskGroupId;
-  private final String taskListId;
-  private final int taskIndex;
-  private final String title;
+  private String taskGroupId;
+  private String taskListId;
+  private int taskIndex;
+  private String title;
 
 
   public TaskListModel(String taskGroupId,
@@ -69,6 +69,11 @@ public class TaskListModel implements Parcelable
   public int describeContents()
   {
     return 0;
+  }
+
+  public void setTaskIndex(int taskIndex)
+  {
+    this.taskIndex = taskIndex;
   }
 
   @Override
