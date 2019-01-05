@@ -241,7 +241,8 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
             container.getTaskListModel().getTitle(),
             this,
             position,
-            sourceDragCardIndex);
+            sourceDragCardIndex,
+            container.getDueDateModelList());
 
     container.setTaskListListAdapter(taskListListAdapter);
 
