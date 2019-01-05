@@ -11,19 +11,23 @@ public class TaskListModelContainer implements Parcelable
 {
   private TaskListModel taskListModel;
   private List<TaskListCardModel> cardList;
+  private List<DueDateModel> dueDateModelList;
   private TaskListListAdapter taskListListAdapter;
 
   public TaskListModelContainer(TaskListModel taskListModel,
-                                List<TaskListCardModel> cardList)
+                                List<TaskListCardModel> cardList,
+                                List<DueDateModel> dueDateModelList)
   {
     this.taskListModel = taskListModel;
     this.cardList = cardList;
+    this.dueDateModelList = dueDateModelList;
   }
 
   protected TaskListModelContainer(Parcel in)
   {
     taskListModel = in.readParcelable(TaskListModel.class.getClassLoader());
     cardList = in.createTypedArrayList(TaskListCardModel.CREATOR);
+    dueDateModelList = in.createTypedArrayList(DueDateModel.CREATOR);
   }
 
   @Override
@@ -31,6 +35,7 @@ public class TaskListModelContainer implements Parcelable
   {
     dest.writeParcelable(taskListModel, flags);
     dest.writeTypedList(cardList);
+    dest.writeTypedList(dueDateModelList);
   }
 
   @Override
@@ -62,6 +67,11 @@ public class TaskListModelContainer implements Parcelable
   public List<TaskListCardModel> getCardList()
   {
     return cardList;
+  }
+
+  public List<DueDateModel> getDueDateModelList()
+  {
+    return dueDateModelList;
   }
 
   public TaskListListAdapter getTaskListListAdapter()
