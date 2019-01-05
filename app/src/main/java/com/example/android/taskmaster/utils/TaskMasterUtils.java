@@ -85,7 +85,7 @@ public class TaskMasterUtils
                                                 @DrawableRes int resId,
                                                 @ColorRes int colorResId)
   {
-    Drawable drawable = ContextCompat.getDrawable(context, resId);
+    Drawable drawable = ContextCompat.getDrawable(context, resId).mutate();
     drawable = DrawableCompat.wrap(drawable);
     DrawableCompat.setTint(drawable, context.getResources().getColor(colorResId));
 
