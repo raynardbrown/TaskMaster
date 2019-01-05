@@ -177,6 +177,7 @@
     <string name="date_time_format_hour_with_leading_zero_minute_period_string" translatable="false">hh:mm a</string>
     <string name="date_time_format_full_month_name_day_year_hour_with_leading_zero_minute_period_string" translatable="false">MMMM dd, yyyy hh:mm a</string>
     <string name="date_time_format_abbreviated_month_name_day_year_string" translatable="false">MMM dd, yyyy</string>
+    <string name="date_time_format_abbreviated_month_name_day_string" translatable="false">MMM dd</string>
     <string name="date_time_format_hour_without_leading_zero_minute_period_string" translatable="false">h:mm a</string>
 
     <!--
