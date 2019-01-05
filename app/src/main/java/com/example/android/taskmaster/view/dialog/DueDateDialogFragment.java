@@ -296,6 +296,7 @@ public class DueDateDialogFragment extends DialogFragment
 
               currentDate.set(Calendar.MONTH, month);
               currentDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+              currentDate.set(Calendar.YEAR, year);
 
               dateAdapter.setSelectionText(dateFormat.format(currentDate.getTime()));
             }
