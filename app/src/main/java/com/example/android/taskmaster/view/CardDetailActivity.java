@@ -758,24 +758,32 @@ public class CardDetailActivity extends AppCompatActivity implements IDueDateDia
 
       if(compareTime <= 0)
       {
-        // we have 24 hours left
-        drawable = TaskMasterUtils.setDrawableResColorRes(this,
-                R.drawable.ic_baseline_schedule_24px,
-                R.color.due_date_soon);
-
+        // we have at least 24 hours left
         currentDueDateColorResId = R.color.due_date_soon;
+
+        if(!binding.cbCardDetailActivityDueDate.isChecked() && !dueDateModel.isCompleted())
+        {
+          drawable = TaskMasterUtils.setDrawableResColorRes(this,
+                  R.drawable.ic_baseline_schedule_24px,
+                  R.color.due_date_soon);
+
+          binding.ivCardDetailActivityDueDate.setImageDrawable(drawable);
+        }
       }
       else
       {
         // we have less than 24 hours left
-        drawable = TaskMasterUtils.setDrawableResColorRes(this,
-                R.drawable.ic_baseline_schedule_24px,
-                R.color.due_date_sooner);
-
         currentDueDateColorResId = R.color.due_date_sooner;
-      }
 
-      binding.ivCardDetailActivityDueDate.setImageDrawable(drawable);
+        if(!binding.cbCardDetailActivityDueDate.isChecked() && !dueDateModel.isCompleted())
+        {
+          drawable = TaskMasterUtils.setDrawableResColorRes(this,
+                  R.drawable.ic_baseline_schedule_24px,
+                  R.color.due_date_sooner);
+
+          binding.ivCardDetailActivityDueDate.setImageDrawable(drawable);
+        }
+      }
     }
     else
     {
@@ -784,14 +792,17 @@ public class CardDetailActivity extends AppCompatActivity implements IDueDateDia
               dateFormatted,
               timeFormatted);
 
-      // set the past due color
-      drawable = TaskMasterUtils.setDrawableResColorRes(this,
-              R.drawable.ic_baseline_schedule_24px,
-              R.color.due_date_past);
-
       currentDueDateColorResId = R.color.due_date_past;
 
-      binding.ivCardDetailActivityDueDate.setImageDrawable(drawable);
+      if(!binding.cbCardDetailActivityDueDate.isChecked() && !dueDateModel.isCompleted())
+      {
+        // set the past due color
+        drawable = TaskMasterUtils.setDrawableResColorRes(this,
+                R.drawable.ic_baseline_schedule_24px,
+                R.color.due_date_past);
+
+        binding.ivCardDetailActivityDueDate.setImageDrawable(drawable);
+      }
     }
 
     if(dueDateCheckChangeListener == null)
