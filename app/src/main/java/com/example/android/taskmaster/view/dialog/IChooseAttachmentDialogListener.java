@@ -6,4 +6,6 @@ public interface IChooseAttachmentDialogListener
                               int attachmentType,
                               String attachmentExtraPath,
                               int attachmentExtraType);
+
+  public void onNewAttachmentDelayed();
 }
