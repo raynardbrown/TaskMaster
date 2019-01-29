@@ -6,6 +6,7 @@ import android.os.Parcelable;
 public class AttachmentModel implements Parcelable
 {
   private String cardId;
+  private String attachmentId;
   private String attachmentData;
   private int attachmentIndex;
   private long attachmentTime;
@@ -13,6 +14,7 @@ public class AttachmentModel implements Parcelable
   private boolean bound;
 
   public AttachmentModel(String cardId,
+                         String attachmentId,
                          String attachmentData,
                          int attachmentIndex,
                          long attachmentTime,
@@ -20,6 +22,7 @@ public class AttachmentModel implements Parcelable
                          boolean bound)
   {
     this.cardId = cardId;
+    this.attachmentId = attachmentId;
     this.attachmentData = attachmentData;
     this.attachmentIndex = attachmentIndex;
     this.attachmentTime = attachmentTime;
@@ -27,9 +30,10 @@ public class AttachmentModel implements Parcelable
     this.bound = bound;
   }
 
-  protected AttachmentModel(Parcel in)
+  private AttachmentModel(Parcel in)
   {
     cardId = in.readString();
+    attachmentId = in.readString();
     attachmentData = in.readString();
     attachmentIndex = in.readInt();
     attachmentTime = in.readLong();
@@ -41,6 +45,7 @@ public class AttachmentModel implements Parcelable
   public void writeToParcel(Parcel dest, int flags)
   {
     dest.writeString(cardId);
+    dest.writeString(attachmentId);
     dest.writeString(attachmentData);
     dest.writeInt(attachmentIndex);
     dest.writeLong(attachmentTime);
@@ -77,6 +82,16 @@ public class AttachmentModel implements Parcelable
   public void setCardId(String cardId)
   {
     this.cardId = cardId;
+  }
+
+  public String getAttachmentId()
+  {
+    return attachmentId;
+  }
+
+  public void setAttachmentId(String attachmentId)
+  {
+    this.attachmentId = attachmentId;
   }
 
   public String getAttachmentData()
