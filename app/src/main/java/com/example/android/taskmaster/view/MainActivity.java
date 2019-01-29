@@ -1,11 +1,11 @@
 package com.example.android.taskmaster.view;
 
-import android.appwidget.AppWidgetManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
+import android.net.ConnectivityManager;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
@@ -17,15 +17,17 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.example.android.taskmaster.R;
 import com.example.android.taskmaster.databinding.ActivityMainBinding;
 import com.example.android.taskmaster.model.TaskGroupModel;
+import com.example.android.taskmaster.receiver.INetworkEventHandler;
+import com.example.android.taskmaster.receiver.NetworkBroadcastReceiver;
 import com.example.android.taskmaster.utils.TaskMasterConstants;
 import com.example.android.taskmaster.utils.TaskMasterUtils;
 import com.example.android.taskmaster.view.dialog.CreateGroupDialogFragment;
 import com.example.android.taskmaster.view.dialog.ICreateGroupDialogListener;
-import com.example.android.taskmaster.view.widget.TaskMasterWidgetProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -42,11 +44,13 @@ import java.util.Map;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements ITaskGroupListItemClickListener,
-                                                               ICreateGroupDialogListener
+                                                               ICreateGroupDialogListener,
+                                                               INetworkEventHandler
 {
   private ActivityMainBinding binding;
   private List<TaskGroupModel> taskGroupList;
   private TaskGroupListAdapter adapter;
+  private NetworkBroadcastReceiver networkBroadcastReceiver;
 
   public static Intent getStartIntent(Context context)
   {
@@ -68,6 +72,9 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
 
     if(savedInstanceState == null)
     {
+      // clear any dirty state since the activity is being initialized
+      TaskMasterUtils.clearUiDirtyState(this);
+
       if(!TaskMasterUtils.isUserLoggedIn(this))
       {
         finish();
@@ -80,19 +87,24 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
         // we are logged in
         taskGroupList = new ArrayList<>();
 
+        launchBroadcastReceiverIfNotRegistered();
+
         // We must set up all the UI components before fetching data since the fetching mechanism
         // has dependencies on the initialized UI components.
         postActivityLogInSetup();
 
-        fetchRemoteData();
+        // No need to fetch data here. The broadcast receiver will fetch data if there is network
+        // connectivity.
 
         // Notify the widget that we are logged in
-        notifyWidget();
+        TaskMasterUtils.startWidgetDueDateFetch(this);
       }
     }
     else
     {
       taskGroupList = savedInstanceState.getParcelableArrayList(getString(R.string.task_group_list_key));
+
+      launchBroadcastReceiverIfNotRegistered();
 
       postActivityLogInSetup();
     }
@@ -118,6 +130,17 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
       taskGroupList.clear();
 
       fetchRemoteData();
+    }
+  }
+
+  @Override
+  protected void onDestroy()
+  {
+    super.onDestroy();
+
+    if(networkBroadcastReceiver != null)
+    {
+      unregisterReceiver(networkBroadcastReceiver);
     }
   }
 
@@ -159,83 +182,157 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
   @Override
   public void onTaskGroupListItemClick(int index)
   {
-    Intent intent = TaskGroupActivity.getStartIntent(this,
-            taskGroupList.get(index),
-            taskGroupList);
+    if(TaskMasterUtils.isNetworkAvailable(MainActivity.this))
+    {
+      Intent intent = TaskGroupActivity.getStartIntent(this,
+              taskGroupList.get(index),
+              taskGroupList);
 
-    startActivity(intent);
+      startActivity(intent);
+    }
+    else
+    {
+      Toast.makeText(MainActivity.this,
+              getString(R.string.error_network_not_available),
+              Toast.LENGTH_LONG).show();
+    }
   }
 
   @Override
   public void onCreateGroupClick(String newGroupName)
   {
-    TaskGroupModel taskGroupModel = new TaskGroupModel(UUID.randomUUID().toString(),
-            newGroupName,
-            TaskMasterConstants.DEFAULT_BACKGROUND);
-
-    taskGroupList.add(taskGroupModel);
-
-    // The list must be displayed sorted by task name
-    Collections.sort(taskGroupList, new SortByTaskName());
-
-    FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference rootDatabaseReference = database.getReference();
-
-    // table/object
-    final String taskGroupPrimaryKey = taskGroupModel.getId();
-
-    Map<String, Object> childUpdates = new HashMap<>();
-
-    FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-
-    if(firebaseAuth.getCurrentUser() != null) // TODO: Handle null which means not logged in (Go back to the welcome activity?)
+    if(TaskMasterUtils.isNetworkAvailable(MainActivity.this))
     {
-      String currentUserEmailAddress = firebaseAuth.getCurrentUser().getEmail();
+      TaskGroupModel taskGroupModel = new TaskGroupModel(UUID.randomUUID().toString(),
+              newGroupName,
+              TaskMasterConstants.DEFAULT_BACKGROUND);
 
-      // Handle null which means no email associated with the user.
-      // This should never happen since if we are logged in, we have an email address.
-      if(currentUserEmailAddress != null)
+      taskGroupList.add(taskGroupModel);
+
+      // The list must be displayed sorted by task name
+      Collections.sort(taskGroupList, new SortByTaskName());
+
+      FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+
+      if(firebaseAuth.getCurrentUser() != null)
       {
-        // Firebase does not allow a key to contain a period "."
-        String firebaseSafeEmailKey = currentUserEmailAddress.replace(".", ",");
+        String currentUserEmailAddress = firebaseAuth.getCurrentUser().getEmail();
 
-        String taskGroupModelRoot = String.format("/%s/%s/", getString(R.string.db_task_group_object), taskGroupPrimaryKey);
-
-        String taskGroupModelUserRoot = String.format("/%s/%s/%s", getString(R.string.db_task_group_user), firebaseSafeEmailKey, taskGroupPrimaryKey);
-
-        childUpdates.put(taskGroupModelRoot + getString(R.string.db_task_group_object_title),
-                taskGroupModel.getTitle());
-
-        childUpdates.put(taskGroupModelRoot + getString(R.string.db_task_group_object_color_key),
-                taskGroupModel.getColorKey());
-
-        // Link the task group to a user
-        childUpdates.put(taskGroupModelUserRoot, true);
-
-        rootDatabaseReference.updateChildren(childUpdates, new DatabaseReference.CompletionListener()
+        // Handle null which means no email associated with the user.
+        // This should never happen since if we are logged in, we have an email address.
+        if(currentUserEmailAddress != null)
         {
-          @Override
-          public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+          // table/object
+          final String taskGroupPrimaryKey = taskGroupModel.getId();
+
+          Map<String, Object> childUpdates = new HashMap<>();
+
+          // Firebase does not allow a key to contain a period "."
+          String firebaseSafeEmailKey = currentUserEmailAddress.replace(".", ",");
+
+          String taskGroupModelRoot = String.format("/%s/%s/", getString(R.string.db_task_group_object), taskGroupPrimaryKey);
+
+          String taskGroupModelUserRoot = String.format("/%s/%s/%s", getString(R.string.db_task_group_user), firebaseSafeEmailKey, taskGroupPrimaryKey);
+
+          childUpdates.put(taskGroupModelRoot + getString(R.string.db_task_group_object_title),
+                  taskGroupModel.getTitle());
+
+          childUpdates.put(taskGroupModelRoot + getString(R.string.db_task_group_object_color_key),
+                  taskGroupModel.getColorKey());
+
+          // Link the task group to a user
+          childUpdates.put(taskGroupModelUserRoot, true);
+
+          FirebaseDatabase database = FirebaseDatabase.getInstance();
+          DatabaseReference rootDatabaseReference = database.getReference();
+
+          rootDatabaseReference.updateChildren(childUpdates, new DatabaseReference.CompletionListener()
           {
-            if(databaseError == null)
+            @Override
+            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
             {
-              // write success
-              Log.i("MainAct", "wrote task group to database");
+              if(databaseError == null)
+              {
+                // write success
+                Log.i("MainAct", "wrote task group to database");
+              }
+              else
+              {
+                // write failure
+                Log.i("MainAct", "failed to write task group to database");
+              }
             }
-            else
-            {
-              // write failure
-              Log.i("MainAct", "failed to write task group to database");
-            }
-          }
-        });
+          });
 
-        // Refresh the recycler view
-        adapter.notifyDataSetChanged();
+          // Refresh the recycler view
+          adapter.notifyDataSetChanged();
 
-        refreshRecyclerViewVisibilityState();
+          refreshRecyclerViewVisibilityState();
+        }
+      }
+      else
+      {
+        // The user is not signed in. This should never happen since we check if we are signed in
+        // before starting this activity.
+        //
+        // However, handle this case anyway and return the user to the welcome activity
+
+        Toast.makeText(MainActivity.this,
+                getString(R.string.error_user_not_signed_in),
+                Toast.LENGTH_LONG).show();
+
+        finish();
+
+        Intent intent = WelcomeActivity.getStartIntent(this);
+        startActivity(intent);
       }
     }
+    else
+    {
+      Toast.makeText(MainActivity.this,
+              getString(R.string.error_network_not_available),
+              Toast.LENGTH_LONG).show();
+    }
+  }
+
+  @Override
+  public void onNetworkActive()
+  {
+    hideNetworkErrorMessageAndShowFab();
+    refreshRecyclerViewVisibilityState();
+
+    if(taskGroupList.isEmpty())
+    {
+      fetchRemoteData();
+    }
+  }
+
+  @Override
+  public void onNetworkInactive()
+  {
+    if(taskGroupList.isEmpty())
+    {
+      // show network error
+      showNetworkErrorMessageAndHideFab();
+    }
+  }
+
+  private void showNetworkErrorMessageAndHideFab()
+  {
+    binding.tvErrorMainActivityNoNetwork.setVisibility(View.VISIBLE);
+
+    binding.rvMainActivity.setVisibility(View.INVISIBLE);
+
+    binding.tvErrorMainActivityNoTaskGroups.setVisibility(View.INVISIBLE);
+
+    binding.fabMainActivityCreateGroup.setVisibility(View.INVISIBLE);
+  }
+
+  private void hideNetworkErrorMessageAndShowFab()
+  {
+    binding.tvErrorMainActivityNoNetwork.setVisibility(View.INVISIBLE);
+
+    binding.fabMainActivityCreateGroup.setVisibility(View.VISIBLE);
   }
 
   private void registerClickHandler()
@@ -280,8 +377,6 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
     registerClickHandler();
 
     setupRecyclerView();
-
-    refreshRecyclerViewVisibilityState();
   }
 
   private void fetchRemoteData()
@@ -290,7 +385,7 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
 
     FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
 
-    if(firebaseAuth.getCurrentUser() != null) // TODO: Handle null which means not logged in (Go back to the welcome activity?)
+    if(firebaseAuth.getCurrentUser() != null)
     {
       String currentUserEmailAddress = firebaseAuth.getCurrentUser().getEmail();
 
@@ -329,6 +424,22 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
                 });
       }
     }
+    else
+    {
+      // The user is not signed in. This should never happen since we check if we are signed in
+      // before starting this activity.
+      //
+      // However, handle this case anyway and return the user to the welcome activity
+
+      Toast.makeText(MainActivity.this,
+              getString(R.string.error_user_not_signed_in),
+              Toast.LENGTH_LONG).show();
+
+      finish();
+
+      Intent intent = WelcomeActivity.getStartIntent(this);
+      startActivity(intent);
+    }
   }
 
   private void logoutHandler()
@@ -343,7 +454,7 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
     editor.apply();
 
     // Notify the widget that we are logged out
-    notifyWidget();
+    TaskMasterUtils.startWidgetDueDateDeleteAll(this);
 
     // Start the welcome activity since we are logged out
     finish();
@@ -351,11 +462,17 @@ public class MainActivity extends AppCompatActivity implements ITaskGroupListIte
     startActivity(intent);
   }
 
-  private void notifyWidget()
+  private void launchBroadcastReceiverIfNotRegistered()
   {
-    AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
-    int[] appWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(this, TaskMasterWidgetProvider.class));
-    TaskMasterWidgetProvider.updateTaskMasterWidgets(this, appWidgetManager, appWidgetIds);
+    if(networkBroadcastReceiver == null)
+    {
+      IntentFilter networkIntentFilter = new IntentFilter();
+      networkIntentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+
+      networkBroadcastReceiver = new NetworkBroadcastReceiver(this);
+
+      registerReceiver(networkBroadcastReceiver, networkIntentFilter);
+    }
   }
 
   class SortByTaskName implements Comparator<TaskGroupModel>
