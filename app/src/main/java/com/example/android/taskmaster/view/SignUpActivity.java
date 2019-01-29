@@ -16,6 +16,7 @@ import android.widget.Toast;
 import com.example.android.taskmaster.R;
 import com.example.android.taskmaster.databinding.ActivitySignUpBinding;
 import com.example.android.taskmaster.utils.InputValidator;
+import com.example.android.taskmaster.utils.TaskMasterUtils;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -327,73 +328,82 @@ public class SignUpActivity extends AppCompatActivity
 
       if(firstNameIsValid && lastNameIsValid && emailFieldIsValid && passwordFieldIsValid)
       {
-        final FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+        if(TaskMasterUtils.isNetworkAvailable(SignUpActivity.this))
+        {
+          final FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
 
-        // show progress bar
-        binding.progressBarSignUpActivity.setVisibility(View.VISIBLE);
+          // show progress bar
+          binding.progressBarSignUpActivity.setVisibility(View.VISIBLE);
 
-        firebaseAuth.createUserWithEmailAndPassword(emailString, passwordString)
-                .addOnCompleteListener(SignUpActivity.this, new OnCompleteListener<AuthResult>()
-                {
-                  @Override
-                  public void onComplete(@NonNull Task<AuthResult> task)
+          firebaseAuth.createUserWithEmailAndPassword(emailString, passwordString)
+                  .addOnCompleteListener(SignUpActivity.this, new OnCompleteListener<AuthResult>()
                   {
-                    // hide progress bar
-                    binding.progressBarSignUpActivity.setVisibility(View.GONE);
-
-                    if(task.isSuccessful())
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task)
                     {
-                      // user creation successful
+                      // hide progress bar
+                      binding.progressBarSignUpActivity.setVisibility(View.GONE);
 
-                      // TODO: send email verification (hold off until another release)
-                      // NOTE: Normally you would send an email verification on account creation
-                      //       success, from there you would check the verification flag
-                      //       (isEmailVerified) during log in and accept or reject a log in.
-
-                      // launch the log in activity
-                      Intent intent = LogInActivity.getStartIntent(SignUpActivity.this);
-
-                      startActivity(intent);
-                    }
-                    else
-                    {
-                      // create user failed
-
-                      Exception exception = task.getException();
-
-                      if(exception != null)
+                      if(task.isSuccessful())
                       {
-                        Log.w(SignUpActivity.TAG, "createUserWithEmail: failed: ", exception);
+                        // user creation successful
 
-                        try
+                        // NOTE: Normally you would send an email verification on account creation
+                        //       success, from there you would check the verification flag
+                        //       (isEmailVerified) during log in and accept or reject a log in.
+
+                        // launch the log in activity
+                        Intent intent = LogInActivity.getStartIntent(SignUpActivity.this);
+
+                        startActivity(intent);
+                      }
+                      else
+                      {
+                        // create user failed
+
+                        Exception exception = task.getException();
+
+                        if(exception != null)
                         {
-                          throw exception;
-                        }
-                        catch(FirebaseAuthWeakPasswordException e)
-                        {
-                          binding.tilSignUpActivityPassword.setError(e.getReason());
-                          binding.tilSignUpActivityPassword.requestFocus();
-                        }
-                        catch(FirebaseAuthInvalidCredentialsException e)
-                        {
-                          binding.tilSignUpActivityEmailAddress.setError(getString(R.string.error_firebase_create_account_failed_email_invalid_string));
-                          binding.tilSignUpActivityEmailAddress.requestFocus();
-                        }
-                        catch(FirebaseAuthUserCollisionException e)
-                        {
-                          binding.tilSignUpActivityEmailAddress.setError(getString(R.string.error_firebase_create_account_failed_email_exists_string));
-                          binding.tilSignUpActivityEmailAddress.requestFocus();
-                        }
-                        catch(Exception e)
-                        {
-                          Toast.makeText(SignUpActivity.this,
-                                  getString(R.string.error_firebase_create_account_failed),
-                                  Toast.LENGTH_LONG).show();
+                          Log.w(SignUpActivity.TAG, "createUserWithEmail: failed: ", exception);
+
+                          try
+                          {
+                            throw exception;
+                          }
+                          catch(FirebaseAuthWeakPasswordException e)
+                          {
+                            binding.tilSignUpActivityPassword.setError(e.getReason());
+                            binding.tilSignUpActivityPassword.requestFocus();
+                          }
+                          catch(FirebaseAuthInvalidCredentialsException e)
+                          {
+                            binding.tilSignUpActivityEmailAddress.setError(getString(R.string.error_firebase_create_account_failed_email_invalid_string));
+                            binding.tilSignUpActivityEmailAddress.requestFocus();
+                          }
+                          catch(FirebaseAuthUserCollisionException e)
+                          {
+                            binding.tilSignUpActivityEmailAddress.setError(getString(R.string.error_firebase_create_account_failed_email_exists_string));
+                            binding.tilSignUpActivityEmailAddress.requestFocus();
+                          }
+                          catch(Exception e)
+                          {
+                            Toast.makeText(SignUpActivity.this,
+                                    getString(R.string.error_firebase_create_account_failed),
+                                    Toast.LENGTH_LONG).show();
+                          }
                         }
                       }
                     }
-                  }
-                });
+                  });
+        }
+        else
+        {
+          // no network available
+          Toast.makeText(SignUpActivity.this,
+                  getString(R.string.error_network_not_available),
+                  Toast.LENGTH_LONG).show();
+        }
       }
 
     }
