@@ -43,8 +43,13 @@
             android:id="@+id/rv_main_activity"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            android:visibility="visible"/>
 
+        <!--
+             Do not use visibility="gone" because if you set the visibility to visible later on,
+             the height will be 0.!?!?!
+        -->
         <TextView
             android:id="@+id/tv_error_main_activity_no_task_groups"
             android:layout_width="match_parent"
@@ -54,7 +59,22 @@
             android:textSize="32sp"
             android:text="@string/main_activity_error_no_task_groups_string"
             tools:text="@string/main_activity_error_no_task_groups_string"
-            android:visibility="gone"/>
+            android:visibility="invisible"/>
+
+        <!--
+             Do not use visibility="gone" because if you set the visibility to visible later on,
+             the height will be 0.!?!?!
+        -->
+        <TextView
+            android:id="@+id/tv_error_main_activity_no_network"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            android:gravity="center_vertical|center_horizontal"
+            android:textSize="32sp"
+            android:text="@string/main_activity_error_no_network_string"
+            tools:text="@string/main_activity_error_no_network_string"
+            android:visibility="invisible"/>
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/fab_main_activity_create_group"
