@@ -9,21 +9,26 @@ import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Base64;
-import android.util.DisplayMetrics;
-import android.view.Display;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.android.taskmaster.R;
 import com.example.android.taskmaster.databinding.AttachmentItemBinding;
+import com.example.android.taskmaster.db.FirebaseRealtimeDbProvider;
 import com.example.android.taskmaster.model.AttachmentCreationInfo;
+import com.example.android.taskmaster.model.AttachmentExtraDataModel;
+import com.example.android.taskmaster.model.AttachmentModel;
 import com.example.android.taskmaster.utils.TaskMasterConstants;
+import com.example.android.taskmaster.utils.TaskMasterUtils;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
@@ -32,6 +37,7 @@ import java.io.ByteArrayOutputStream;
 import java.text.Format;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 
 public class CardDetailAttachmentAdapter extends RecyclerView.Adapter<CardDetailAttachmentAdapter.CardDetailAttachmentAdapterViewHolder>
 {
@@ -85,28 +91,23 @@ public class CardDetailAttachmentAdapter extends RecyclerView.Adapter<CardDetail
         // load the image
         final ImageView imageView = itemBinding.ivAttachmentImageType;
 
-        WindowManager windowManager = (WindowManager)imageView.getContext().getSystemService(Context.WINDOW_SERVICE);
+        Context context = imageView.getContext();
 
-        if(windowManager != null)
-        {
-          Display display = windowManager.getDefaultDisplay();
-          DisplayMetrics outMetrics = new DisplayMetrics();
-          display.getMetrics(outMetrics);
+        int targetWidth = TaskMasterUtils.dpToPixel(context,
+                context.getResources().getDimensionPixelSize(R.dimen.image_attachment_default_width_dp));
 
-          float density = imageView.getResources().getDisplayMetrics().density;
-          float dpWidth = outMetrics.widthPixels / density;
+        int targetHeight = TaskMasterUtils.dpToPixel(context,
+                context.getResources().getDimensionPixelSize(R.dimen.image_attachment_default_height_dp));
 
-          Picasso.with(imageView.getContext())
-                  .load(attachmentCreationInfo.getAttachmentPath())
-                  .resize(dpToPixel(imageView.getContext(), dpWidth), dpToPixel(imageView.getContext(),
-                          300)) // TODO: Don't use this hardcoded value, add it to dimens.xml and pull it from there.
-                  .onlyScaleDown()
-                  .into(imageView, new AttachmentLoadedCallback(holder, attachmentCreationInfo));
-        }
+        Picasso.with(context)
+                .load(attachmentCreationInfo.getAttachmentPath())
+                .resize(targetWidth, targetHeight)
+                .onlyScaleDown()
+                .into(imageView, new AttachmentLoadedCallback(holder, attachmentCreationInfo));
       }
       else
       {
-        // TODO: fetch the attachment data from the database, DO NOT USE ATTACHMENT DATA!!! The attachment data could be too large to send throughout the app (i.e. intents)
+        // we already have data
         byte[] base64AttachmentData = Base64.decode(attachmentData,
                 Base64.NO_WRAP);
 
@@ -133,44 +134,112 @@ public class CardDetailAttachmentAdapter extends RecyclerView.Adapter<CardDetail
       itemBinding.clAttachmentLinkTypeContainer.setVisibility(View.VISIBLE);
       itemBinding.clAttachmentImageTypeContainer.setVisibility(View.GONE);
 
-      if(TextUtils.isEmpty(attachmentCreationInfo.getAttachmentExtraPath()))
+      String attachmentData = attachmentCreationInfo.getAttachmentModel().getAttachmentData();
+
+      if(attachmentData.isEmpty())
       {
-        itemBinding.tvAttachmentLinkType.setText(attachmentCreationInfo.getAttachmentPath());
+        if(TextUtils.isEmpty(attachmentCreationInfo.getAttachmentExtraPath()))
+        {
+          itemBinding.tvAttachmentLinkType.setText(attachmentCreationInfo.getAttachmentPath());
+        }
+        else
+        {
+          itemBinding.tvAttachmentLinkType.setText(attachmentCreationInfo.getAttachmentExtraPath());
+        }
+
+        String base64AttachmentLinkData = Base64.encodeToString(attachmentCreationInfo.getAttachmentPath().getBytes(),
+                Base64.NO_WRAP | Base64.URL_SAFE);
+
+        attachmentCreationInfo.getAttachmentModel().setAttachmentData(base64AttachmentLinkData);
+
+
+        if(!TextUtils.isEmpty(attachmentCreationInfo.getAttachmentExtraPath()))
+        {
+          String base64AttachmentLinkExtraData = Base64.encodeToString(attachmentCreationInfo.getAttachmentExtraPath().getBytes(),
+                  Base64.NO_WRAP | Base64.URL_SAFE);
+
+          attachmentCreationInfo.getAttachmentExtraDataModel().setAttachmentExtraData(base64AttachmentLinkExtraData);
+        }
+
+        // update the database
+        Context context = itemBinding.tvAttachmentLinkType.getContext();
+
+        AttachmentModel attachmentModel = attachmentCreationInfo.getAttachmentModel();
+
+        FirebaseRealtimeDbProvider.addAttachment(context,
+                attachmentModel,
+                new DatabaseReference.CompletionListener()
+                {
+                  @Override
+                  public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+                  {
+                    if(databaseError == null)
+                    {
+                      // write success
+                      Log.i("CardDetailAttAdp", "wrote link attachment to database");
+                    }
+                    else
+                    {
+                      // write failure
+                      Log.i("CardDetailAttAdp", "failed to write link attachment to database");
+                    }
+                  }
+                });
+
+        if(!TextUtils.isEmpty(attachmentCreationInfo.getAttachmentExtraPath()))
+        {
+          AttachmentExtraDataModel attachmentExtraDataModel = attachmentCreationInfo.getAttachmentExtraDataModel();
+
+          FirebaseRealtimeDbProvider.addAttachmentExtraData(context,
+                  attachmentModel.getAttachmentId(),
+                  attachmentExtraDataModel,
+                  new DatabaseReference.CompletionListener()
+                  {
+                    @Override
+                    public void onComplete(DatabaseError databaseError,
+                                           DatabaseReference databaseReference)
+                    {
+                      if(databaseError == null)
+                      {
+                        // write success
+                        Log.i("CardDetailAttAdp", "wrote attachment extra data to database");
+                      }
+                      else
+                      {
+                        // write failure
+                        Log.i("CardDetailAttAdp", "failed to write attachment extra data to database");
+                      }
+                    }
+                  });
+        }
       }
       else
       {
-        itemBinding.tvAttachmentLinkType.setText(attachmentCreationInfo.getAttachmentExtraPath());
+        // we already have data
+        String attachmentExtraData = attachmentCreationInfo.getAttachmentExtraDataModel().getAttachmentExtraData();
+
+        if(TextUtils.isEmpty(attachmentExtraData))
+        {
+          byte[] base64AttachmentData = Base64.decode(attachmentData,
+                  Base64.NO_WRAP | Base64.URL_SAFE);
+
+          itemBinding.tvAttachmentLinkType.setText(new String(base64AttachmentData));
+        }
+        else
+        {
+          byte[] base64AttachmentExtraData = Base64.decode(attachmentExtraData,
+                  Base64.NO_WRAP | Base64.URL_SAFE);
+
+          itemBinding.tvAttachmentLinkType.setText(new String(base64AttachmentExtraData));
+        }
       }
 
       // fill in the time ui
       fillInTimeUi(itemBinding.tvAttachmentLinkTypeTime, attachmentCreationInfo);
 
-      String base64AttachmentLinkData = Base64.encodeToString(attachmentCreationInfo.getAttachmentPath().getBytes(),
-              Base64.NO_WRAP | Base64.URL_SAFE);
-
-      attachmentCreationInfo.getAttachmentModel().setAttachmentData(base64AttachmentLinkData);
-
-      if(!TextUtils.isEmpty(attachmentCreationInfo.getAttachmentExtraPath()))
-      {
-        String base64AttachmentLinkExtraData = Base64.encodeToString(attachmentCreationInfo.getAttachmentExtraPath().getBytes(),
-                Base64.NO_WRAP | Base64.URL_SAFE);
-
-        attachmentCreationInfo.getAttachmentExtraDataModel().setAttachmentExtraData(base64AttachmentLinkExtraData);
-      }
-
       // set up menu click listener
       itemBinding.menuButtonAttachmentLinkType.setOnClickListener(new AttachmentLinkMenuClickListener(holder));
-
-      // TODO: Notify the card activity so that the database can be updated
     }
-  }
-
-  // TODO: Move this to utils
-  public int dpToPixel(Context context, float dp)
-  {
-    float density = context.getResources().getDisplayMetrics().density;
-
-    return (int)(dp * density);
   }
 
   @Override
@@ -183,10 +252,10 @@ public class CardDetailAttachmentAdapter extends RecyclerView.Adapter<CardDetail
   {
     Context context = textView.getContext();
 
-    Format dateFormatter = new SimpleDateFormat(context.getString(R.string.date_time_format_day_of_week_full_month_name_day_year_string));
+    Format dateFormatter = new SimpleDateFormat(context.getString(R.string.date_time_format_day_of_week_full_month_name_day_year_string), Locale.getDefault());
     String dateFormatted = dateFormatter.format(attachmentCreationInfo.getAttachmentModel().getAttachmentTime());
 
-    Format timeFormatter = new SimpleDateFormat(context.getString(R.string.date_time_format_hour_with_leading_zero_minute_period_string));
+    Format timeFormatter = new SimpleDateFormat(context.getString(R.string.date_time_format_hour_with_leading_zero_minute_period_string), Locale.getDefault());
     String timeFormatted = timeFormatter.format(attachmentCreationInfo.getAttachmentModel().getAttachmentTime());
 
     String dateTimeString = String.format(textView.getResources().getString(R.string.card_detail_activity_attachment_time_format_string),
@@ -225,10 +294,34 @@ public class CardDetailAttachmentAdapter extends RecyclerView.Adapter<CardDetail
       String base64AttachmentData = Base64.encodeToString(byteArrayOutputStream.toByteArray(),
               Base64.NO_WRAP);
 
-      attachmentCreationInfo.getAttachmentModel().setAttachmentData(base64AttachmentData);
+      AttachmentModel attachmentModel = attachmentCreationInfo.getAttachmentModel();
+      attachmentModel.setAttachmentData(base64AttachmentData);
 
       // Notify the card activity so that the database can be updated
       attachmentListener.onImageAttachmentLoaded(holder.getAdapterPosition(), imageView);
+
+      Context context = imageView.getContext();
+
+      // update the database
+      FirebaseRealtimeDbProvider.addAttachment(context,
+              attachmentModel,
+              new DatabaseReference.CompletionListener()
+      {
+        @Override
+        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+        {
+          if(databaseError == null)
+          {
+            // write success
+            Log.i("CardDetailAttAdp", "wrote image attachment to database");
+          }
+          else
+          {
+            // write failure
+            Log.i("CardDetailAttAdp", "failed to write image attachment to database");
+          }
+        }
+      });
     }
 
     @Override
@@ -274,7 +367,18 @@ public class CardDetailAttachmentAdapter extends RecyclerView.Adapter<CardDetail
       {
         case R.id.action_delete_link_attachment:
         {
-          attachmentListener.onAttachmentRemoveRequest(holder.getAdapterPosition());
+          Context context = holder.itemBinding.tvAttachmentLinkType.getContext();
+
+          if(TaskMasterUtils.isNetworkAvailable(context))
+          {
+            attachmentListener.onAttachmentRemoveRequest(holder.getAdapterPosition());
+          }
+          else
+          {
+            Toast.makeText(context,
+                    context.getString(R.string.error_network_not_available),
+                    Toast.LENGTH_LONG).show();
+          }
 
           return true;
         }
@@ -331,25 +435,56 @@ public class CardDetailAttachmentAdapter extends RecyclerView.Adapter<CardDetail
     @Override
     public boolean onMenuItemClick(MenuItem item)
     {
+      Context context = holder.itemBinding.ivAttachmentImageType.getContext();
+
       switch(item.getItemId())
       {
         case R.id.action_delete_attachment_image:
         {
-          attachmentListener.onAttachmentRemoveRequest(holder.getAdapterPosition());
+          if(TaskMasterUtils.isNetworkAvailable(context))
+          {
+            attachmentListener.onAttachmentRemoveRequest(holder.getAdapterPosition());
+          }
+          else
+          {
+            Toast.makeText(context,
+                    context.getString(R.string.error_network_not_available),
+                    Toast.LENGTH_LONG).show();
+          }
 
           return true;
         }
 
         case R.id.action_add_attachment_image_to_toolbar:
         {
-          attachmentListener.onAttachmentBindRequest(holder.getAdapterPosition(),
-                  holder.itemBinding.ivAttachmentImageType);
+          if(TaskMasterUtils.isNetworkAvailable(context))
+          {
+            attachmentListener.onAttachmentBindRequest(holder.getAdapterPosition(),
+                    holder.itemBinding.ivAttachmentImageType);
+          }
+          else
+          {
+            Toast.makeText(context,
+                    context.getString(R.string.error_network_not_available),
+                    Toast.LENGTH_LONG).show();
+          }
+
           return true;
         }
 
         case R.id.action_remove_attachment_image_from_toolbar:
         {
-          attachmentListener.onAttachmentUnbindRequest(holder.getAdapterPosition());
+          if(TaskMasterUtils.isNetworkAvailable(context))
+          {
+            attachmentListener.onAttachmentUnbindRequest(holder.getAdapterPosition());
+          }
+          else
+          {
+            Toast.makeText(context,
+                    context.getString(R.string.error_network_not_available),
+                    Toast.LENGTH_LONG).show();
+          }
+
           return true;
         }
 
