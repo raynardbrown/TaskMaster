@@ -7,4 +7,7 @@
     -->
     <dimen name="widget_margin">8dp</dimen>
 
+    <dimen name="image_attachment_default_width_dp">384dp</dimen>
+    <dimen name="image_attachment_default_height_dp">300dp</dimen>
+
 </resources>
