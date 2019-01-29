@@ -17,6 +17,10 @@ import android.view.ViewGroup;
 
 import com.example.android.taskmaster.R;
 import com.example.android.taskmaster.databinding.TaskMasterTaskListBinding;
+import com.example.android.taskmaster.db.FirebaseRealtimeDbProvider;
+import com.example.android.taskmaster.model.AttachmentInfo;
+import com.example.android.taskmaster.model.ChecklistCompletionCounter;
+import com.example.android.taskmaster.model.DueDateModel;
 import com.example.android.taskmaster.model.TaskGroupModel;
 import com.example.android.taskmaster.model.TaskListCardModel;
 import com.example.android.taskmaster.model.TaskListModelContainer;
@@ -30,7 +34,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +63,11 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
    * specified by sourceDragTaskListIndex.
    */
   private int sourceDragCardIndex;
+
+  /**
+   * The initial index of the card that is being dragged.
+   */
+  private int sourceDragCardInitialIndex;
 
   TaskListAdapter(AppCompatActivity activity,
                   List<TaskListModelContainer> taskListList,
@@ -138,6 +146,15 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
 
     taskListCardModelList.add(taskListCardModel);
 
+    // Add a null due date for now
+    taskListModelContainer.getDueDateModelList().add(null);
+
+    // Add null checklist completion data for now
+    taskListModelContainer.getChecklistCompletionCounterList().add(null);
+
+    // Added null attachment info data for now
+    taskListModelContainer.getAttachmentInfoList().add(null);
+
     // Update the database
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference rootDatabaseReference = database.getReference();
@@ -173,12 +190,12 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
                 if(databaseError == null)
                 {
                   // write success
-                  Log.i("TaskListAdap", "wrote task list card to database");
+                  Log.i("TaskListAdp", "wrote task list card to database");
                 }
                 else
                 {
                   // write failure
-                  Log.i("TaskListAdap", "failed to write task list card to database");
+                  Log.i("TaskListAdp", "failed to write task list card to database");
                 }
               }
             });
@@ -200,6 +217,7 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
   {
     this.sourceDragTaskListIndex = taskListPosition;
     this.sourceDragCardIndex = sourceDragCardIndex;
+    this.sourceDragCardInitialIndex = sourceDragCardIndex;
   }
 
   private void bindViews(TaskListAdapterViewHolder holder, int position)
@@ -239,10 +257,13 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
     TaskListListAdapter taskListListAdapter = new TaskListListAdapter(container.getCardList(),
             taskListCardClickDelegate,
             container.getTaskListModel().getTitle(),
+            container.getTaskListModel().getTaskListId(),
             this,
             position,
             sourceDragCardIndex,
-            container.getDueDateModelList());
+            container.getDueDateModelList(),
+            container.getChecklistCompletionCounterList(),
+            container.getAttachmentInfoList());
 
     container.setTaskListListAdapter(taskListListAdapter);
 
@@ -414,7 +435,7 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
               }
 
               // swapped draggedCardView with the dropped on card view.
-              targetTaskListListAdapter.onCardMoved(draggedCardViewInitialAdapterPosition, childDroppedOnPosition);
+              targetTaskListListAdapter.onCardMovedInternal(draggedCardViewInitialAdapterPosition, childDroppedOnPosition);
 
               // update dragged card position
               sourceDragCardIndex = childDroppedOnPosition;
@@ -444,7 +465,7 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
           TaskListListAdapter targetTaskListListAdapter = (TaskListListAdapter) targetRecyclerView.getAdapter();
           TaskListListAdapter sourceTaskListListAdapter = taskListList.get(sourceDragTaskListIndex).getTaskListListAdapter();
 
-          int draggedCardViewInitialAdapterPosition = sourceDragCardIndex;
+          int draggedCardViewInitialAdapterPosition = sourceDragCardInitialIndex;
 
           if(childDroppedOn != null)
           {
@@ -454,12 +475,14 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
             if(sourceTaskListListAdapter == targetTaskListListAdapter)
             {
               // swapped draggedCardView with the dropped on card view.
-              targetTaskListListAdapter.onCardMoved(draggedCardViewInitialAdapterPosition, childDroppedOnPosition);
+              targetTaskListListAdapter.onCardMovedInternalAndUpdateDatabase(targetRecyclerView.getContext(),
+                      draggedCardViewInitialAdapterPosition,
+                      childDroppedOnPosition);
             }
             else
             {
               // drop card on a different recycler view
-              dropCardOnRecyclerView(draggedCardViewInitialAdapterPosition,
+              dropCardOnRecyclerView(sourceDragCardIndex, // <-- sourceDragCardIndex because we may have updated the card position while we were dragging
                       childDroppedOnPosition,
                       sourceTaskListListAdapter,
                       targetRecyclerView);
@@ -468,7 +491,7 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
           else
           {
             // drop the card onto an empty recycler view
-            dropCardOnEmptyRecyclerView(draggedCardViewInitialAdapterPosition,
+            dropCardOnEmptyRecyclerView(sourceDragCardIndex, // <-- sourceDragCardIndex because we may have updated the card position while we were dragging
                     sourceTaskListListAdapter,
                     targetRecyclerView);
           }
@@ -504,24 +527,153 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
                                         RecyclerView targetRecyclerView)
     {
       // remove the dragged card from the source/dragged recycler view
-      TaskListCardModel droppedTaskListCardModel = sourceTaskListListAdapter.getList().remove(draggedCardViewInitialAdapterPosition);
+      List<TaskListCardModel> sourceTaskListCardModelList = sourceTaskListListAdapter.getTaskListCardModelList();
+      TaskListCardModel droppedTaskListCardModel = sourceTaskListCardModelList.remove(draggedCardViewInitialAdapterPosition);
+      DueDateModel droppedDueDateModel = sourceTaskListListAdapter.getDueDateModelList().remove(draggedCardViewInitialAdapterPosition);
+      ChecklistCompletionCounter droppedChecklistCompletionCounter = sourceTaskListListAdapter.getChecklistCompletionCounterList().remove(draggedCardViewInitialAdapterPosition);
+      AttachmentInfo droppedAttachmentInfo = sourceTaskListListAdapter.getAttachmentInfoList().remove(draggedCardViewInitialAdapterPosition);
+
+      // update the card indexes from the removed card position
+      for(int i = draggedCardViewInitialAdapterPosition; i < sourceTaskListCardModelList.size(); ++i)
+      {
+        TaskListCardModel taskListCardModel = sourceTaskListCardModelList.get(i);
+        taskListCardModel.setCardIndex(i);
+
+        // update the database
+        FirebaseRealtimeDbProvider.updateTaskListCardWithIndex(activity,
+                taskListCardModel.getCardId(),
+                taskListCardModel.getCardIndex(),
+                taskListCardModel.getTaskListId(),
+                new DatabaseReference.CompletionListener()
+        {
+          @Override
+          public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+          {
+            if(databaseError == null)
+            {
+              // update success
+              Log.i("TaskListAdp", "updated the task list card index in the database");
+            }
+            else
+            {
+              // update failure
+              Log.i("TaskListAdp", "failed to update the task list card index in the database");
+            }
+          }
+        });
+      }
+
+      // Remove the task list card from the task list
+      FirebaseRealtimeDbProvider.removeTaskListCardFromTaskList(activity,
+              droppedTaskListCardModel.getCardId(),
+              droppedTaskListCardModel.getTaskListId(),
+              new DatabaseReference.CompletionListener()
+      {
+        @Override
+        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+        {
+          if(databaseError == null)
+          {
+            // remove success
+            Log.i("TaskListAdp", "removed the task list card from the task list");
+          }
+          else
+          {
+            // remove failure
+            Log.i("TaskListAdp", "failed to remove the task list card from the task list");
+          }
+        }
+      });
+
+      // Remove the task list card from the database
+      FirebaseRealtimeDbProvider.removeTaskListCard(activity,
+              droppedTaskListCardModel.getCardId(),
+              new DatabaseReference.CompletionListener()
+      {
+        @Override
+        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+        {
+          if(databaseError == null)
+          {
+            // remove success
+            Log.i("TaskListAdp", "removed the task list card from the database");
+          }
+          else
+          {
+            // remove failure
+            Log.i("TaskListAdp", "failed to remove the task list card from the database");
+          }
+        }
+      });
 
       // notify the source of the changes
       sourceTaskListListAdapter.notifyDataSetChanged();
 
       // Target
-
       TaskListListAdapter targetTaskListListAdapter = (TaskListListAdapter)targetRecyclerView.getAdapter();
-      List<TaskListCardModel> taskListCardModelList = targetTaskListListAdapter.getList();
+      List<TaskListCardModel> targetTaskListCardModelList = targetTaskListListAdapter.getTaskListCardModelList();
+      List<DueDateModel> targetDueDateModelList = targetTaskListListAdapter.getDueDateModelList();
+      List<ChecklistCompletionCounter> targetChecklistCompletionCounterList = targetTaskListListAdapter.getChecklistCompletionCounterList();
+      List<AttachmentInfo> targetAttachmentInfoList = targetTaskListListAdapter.getAttachmentInfoList();
+
+      // for now we are just adding the card to the end of the target recycler view
+      droppedTaskListCardModel.setCardIndex(targetTaskListCardModelList.size());
+
+      droppedTaskListCardModel.setTaskListId(targetTaskListListAdapter.getTaskListId());
+
+      droppedTaskListCardModel.setTaskIndex(targetTaskListListAdapter.getTaskListAdapterPosition());
 
       // Add the dropped model to the target recycler view
-      taskListCardModelList.add(droppedTaskListCardModel);
+      targetTaskListCardModelList.add(droppedTaskListCardModel);
+      targetDueDateModelList.add(droppedDueDateModel);
+      targetChecklistCompletionCounterList.add(droppedChecklistCompletionCounter);
+      targetAttachmentInfoList.add(droppedAttachmentInfo);
 
-      // move all of the positions of the target recycler view items to the left by one ending at the dropped child position
-      for(int i = childDroppedOnPosition; i > taskListCardModelList.size(); --i)
+      FirebaseRealtimeDbProvider.addTaskListCardToTaskList(activity,
+              droppedTaskListCardModel.getCardId(),
+              droppedTaskListCardModel.getCardIndex(),
+              droppedTaskListCardModel.getTaskListId(),
+              new DatabaseReference.CompletionListener()
       {
-        Collections.swap(taskListCardModelList, i, i - 1);
-      }
+        @Override
+        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+        {
+          if(databaseError == null)
+          {
+            // add success
+            Log.i("TaskListAdp", "added the task list card to the task list");
+          }
+          else
+          {
+            // add failure
+            Log.i("TaskListAdp", "failed to add the task list card to the task list");
+          }
+        }
+      });
+
+      FirebaseRealtimeDbProvider.addTaskListCard(activity,
+              droppedTaskListCardModel.getCardId(),
+              droppedTaskListCardModel.getCardIndex(),
+              droppedTaskListCardModel.getCardTitle(),
+              droppedTaskListCardModel.getCardDetailedDescription(),
+              droppedTaskListCardModel.getTaskIndex(),
+              new DatabaseReference.CompletionListener()
+      {
+        @Override
+        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+        {
+          if(databaseError == null)
+          {
+            // add success
+            Log.i("TaskListAdp", "added the task list card to the database");
+          }
+          else
+          {
+            // add failure
+            Log.i("TaskListAdp", "failed to add the task list card to the database");
+          }
+        }
+      });
 
       // notify the target of the changes
       targetTaskListListAdapter.notifyDataSetChanged();
@@ -532,18 +684,153 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.TaskLi
                                              RecyclerView targetRecyclerView)
     {
       // remove the dragged card from the source/dragged recycler view
-      TaskListCardModel droppedTaskListCardModel = sourceTaskListListAdapter.getList().remove(draggedCardViewInitialAdapterPosition);
+      List<TaskListCardModel> sourceTaskListCardModelList = sourceTaskListListAdapter.getTaskListCardModelList();
+      TaskListCardModel droppedTaskListCardModel = sourceTaskListCardModelList.remove(draggedCardViewInitialAdapterPosition);
+      DueDateModel droppedDueDateModel = sourceTaskListListAdapter.getDueDateModelList().remove(draggedCardViewInitialAdapterPosition);
+      ChecklistCompletionCounter droppedChecklistCompletionCounter = sourceTaskListListAdapter.getChecklistCompletionCounterList().remove(draggedCardViewInitialAdapterPosition);
+      AttachmentInfo droppedAttachmentInfo = sourceTaskListListAdapter.getAttachmentInfoList().remove(draggedCardViewInitialAdapterPosition);
+
+      // update the card indexes from the removed card position
+      for(int i = draggedCardViewInitialAdapterPosition; i < sourceTaskListCardModelList.size(); ++i)
+      {
+        TaskListCardModel taskListCardModel = sourceTaskListCardModelList.get(i);
+        taskListCardModel.setCardIndex(i);
+
+        // update the database
+        FirebaseRealtimeDbProvider.updateTaskListCardWithIndex(activity,
+                taskListCardModel.getCardId(),
+                taskListCardModel.getCardIndex(),
+                taskListCardModel.getTaskListId(),
+                new DatabaseReference.CompletionListener()
+                {
+                  @Override
+                  public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+                  {
+                    if(databaseError == null)
+                    {
+                      // update success
+                      Log.i("TaskListAdp", "updated the task list card index in the database");
+                    }
+                    else
+                    {
+                      // update failure
+                      Log.i("TaskListAdp", "failed to update the task list card index in the database");
+                    }
+                  }
+                });
+      }
+
+      // Remove the task list card from the task list
+      FirebaseRealtimeDbProvider.removeTaskListCardFromTaskList(activity,
+              droppedTaskListCardModel.getCardId(),
+              droppedTaskListCardModel.getTaskListId(),
+              new DatabaseReference.CompletionListener()
+              {
+                @Override
+                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+                {
+                  if(databaseError == null)
+                  {
+                    // remove success
+                    Log.i("TaskListAdp", "removed the task list card from the task list");
+                  }
+                  else
+                  {
+                    // remove failure
+                    Log.i("TaskListAdp", "failed to remove the task list card from the task list");
+                  }
+                }
+              });
+
+      // Remove the task list card from the database
+      FirebaseRealtimeDbProvider.removeTaskListCard(activity,
+              droppedTaskListCardModel.getCardId(),
+              new DatabaseReference.CompletionListener()
+              {
+                @Override
+                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+                {
+                  if(databaseError == null)
+                  {
+                    // remove success
+                    Log.i("TaskListAdp", "removed the task list card from the database");
+                  }
+                  else
+                  {
+                    // remove failure
+                    Log.i("TaskListAdp", "failed to remove the task list card from the database");
+                  }
+                }
+              });
 
       // notify the source of the changes
       sourceTaskListListAdapter.notifyDataSetChanged();
 
       // Target
-
       TaskListListAdapter targetTaskListListAdapter = (TaskListListAdapter)targetRecyclerView.getAdapter();
-      List<TaskListCardModel> taskListCardModelList = targetTaskListListAdapter.getList();
+      List<TaskListCardModel> targetTaskListCardModelList = targetTaskListListAdapter.getTaskListCardModelList();
+      List<DueDateModel> targetDueDateModelList = targetTaskListListAdapter.getDueDateModelList();
+      List<ChecklistCompletionCounter> targetChecklistCompletionCounterList = targetTaskListListAdapter.getChecklistCompletionCounterList();
+      List<AttachmentInfo> targetAttachmentInfoList = targetTaskListListAdapter.getAttachmentInfoList();
+
+      // Since the target recycler view is empty that means the dropped task list card index should be 0
+      droppedTaskListCardModel.setCardIndex(0);
+
+      droppedTaskListCardModel.setTaskListId(targetTaskListListAdapter.getTaskListId());
+
+      droppedTaskListCardModel.setTaskIndex(targetTaskListListAdapter.getTaskListAdapterPosition());
 
       // Add the dropped model to the target recycler view
-      taskListCardModelList.add(droppedTaskListCardModel);
+      targetTaskListCardModelList.add(droppedTaskListCardModel);
+      targetDueDateModelList.add(droppedDueDateModel);
+      targetChecklistCompletionCounterList.add(droppedChecklistCompletionCounter);
+      targetAttachmentInfoList.add(droppedAttachmentInfo);
+
+      FirebaseRealtimeDbProvider.addTaskListCardToTaskList(activity,
+              droppedTaskListCardModel.getCardId(),
+              droppedTaskListCardModel.getCardIndex(),
+              droppedTaskListCardModel.getTaskListId(),
+              new DatabaseReference.CompletionListener()
+      {
+        @Override
+        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+        {
+          if(databaseError == null)
+          {
+            // add success
+            Log.i("TaskListAdp", "added the task list card to the task list");
+          }
+          else
+          {
+            // add failure
+            Log.i("TaskListAdp", "failed to add the task list card to the task list");
+          }
+        }
+      });
+
+      FirebaseRealtimeDbProvider.addTaskListCard(activity,
+              droppedTaskListCardModel.getCardId(),
+              droppedTaskListCardModel.getCardIndex(),
+              droppedTaskListCardModel.getCardTitle(),
+              droppedTaskListCardModel.getCardDetailedDescription(),
+              droppedTaskListCardModel.getTaskIndex(),
+              new DatabaseReference.CompletionListener()
+      {
+        @Override
+        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+        {
+          if(databaseError == null)
+          {
+            // add success
+            Log.i("TaskListAdp", "added the task list card to the database");
+          }
+          else
+          {
+            // add failure
+            Log.i("TaskListAdp", "failed to add the task list card to the database");
+          }
+        }
+      });
 
       // notify the target of the changes
       targetTaskListListAdapter.notifyDataSetChanged();
