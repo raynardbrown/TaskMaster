@@ -2,11 +2,13 @@ package com.example.android.taskmaster.view;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
+import android.net.ConnectivityManager;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
@@ -22,14 +24,20 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.example.android.taskmaster.R;
 import com.example.android.taskmaster.databinding.ActivityTaskGroupBinding;
+import com.example.android.taskmaster.db.FirebaseRealtimeDbProvider;
+import com.example.android.taskmaster.model.AttachmentInfo;
+import com.example.android.taskmaster.model.ChecklistCompletionCounter;
 import com.example.android.taskmaster.model.DueDateModel;
 import com.example.android.taskmaster.model.TaskGroupModel;
 import com.example.android.taskmaster.model.TaskListCardModel;
 import com.example.android.taskmaster.model.TaskListModel;
 import com.example.android.taskmaster.model.TaskListModelContainer;
+import com.example.android.taskmaster.receiver.INetworkEventHandler;
+import com.example.android.taskmaster.receiver.NetworkBroadcastReceiver;
 import com.example.android.taskmaster.utils.TaskMasterConstants;
 import com.example.android.taskmaster.utils.TaskMasterUtils;
 import com.example.android.taskmaster.view.dialog.ChooseBackgroundDialogFragment;
@@ -53,7 +61,8 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
                                                                     IAddTaskListDialogListener,
                                                                     IMoveTaskListDialogListener,
                                                                     IAddCardDialogListener,
-                                                                    ITaskListCardClickDelegate
+                                                                    ITaskListCardClickDelegate,
+                                                                    INetworkEventHandler
 {
   private ActivityTaskGroupBinding binding;
 
@@ -64,6 +73,10 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
   private TaskGroupModel taskGroupModel;
 
   private List<TaskGroupModel> taskGroupModelList;
+
+  private NetworkBroadcastReceiver networkBroadcastReceiver;
+
+  private boolean fetchAttachmentDataFlag;
 
   public static Intent getStartIntent(Context context,
                                       TaskGroupModel taskGroupModel,
@@ -83,17 +96,36 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
 
     if(savedInstanceState == null)
     {
+      TaskMasterUtils.clearUiDirtyState(this);
+
       Intent intent = getIntent();
 
-      taskGroupModel = intent.getParcelableExtra(getString(R.string.task_group_model_object_key));
+      SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+      String taskGroupId = sharedPreferences.getString(getString(R.string.task_group_id_key), "");
+
+      if(taskGroupId.isEmpty())
+      {
+        taskGroupModel = intent.getParcelableExtra(getString(R.string.task_group_model_object_key));
+      }
+      else
+      {
+        String taskGroupTitle = sharedPreferences.getString(getString(R.string.task_group_title_key), "");
+        int taskGroupColorKey = sharedPreferences.getInt(getString(R.string.task_group_color_key), 0);
+
+        taskGroupModel = new TaskGroupModel(taskGroupId, taskGroupTitle, taskGroupColorKey);
+      }
 
       taskGroupModelList = intent.getParcelableArrayListExtra(getString(R.string.task_group_model_object_list_key));
 
       taskListList = new ArrayList<>();
 
+      launchBroadcastReceiverIfNotRegistered();
+
       postUiInitialization();
 
-      fetchRemoteData();
+      // No need to fetch data here since the broadcast receiver will initiate a fetch if there is
+      // network connectivity.
     }
     else
     {
@@ -103,7 +135,55 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
 
       taskListList = savedInstanceState.getParcelableArrayList(getString(R.string.task_list_model_container_object_list_key));
 
+      fetchAttachmentDataFlag = true;
+
+      launchBroadcastReceiverIfNotRegistered();
+
       postUiInitialization();
+
+      // No need to fetch attachment data here since the broadcast receiver will initiate a fetch if
+      // there is network connectivity.
+    }
+  }
+
+  @Override
+  protected void onResume()
+  {
+    super.onResume();
+
+    // We need to override this function to handle coming back to this activity from the child
+    // activity.
+    //
+    // We also need to handle coming back to this activity from the child activity that was launched
+    // by the app widget.
+
+    TaskMasterUtils.clearTaskGroupSharedState(this);
+
+    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+    if(sharedPreferences.getBoolean(getString(R.string.shared_pref_app_state_changed_key), false))
+    {
+      // Don't forget the clear the state
+      SharedPreferences.Editor editor = sharedPreferences.edit();
+      editor.putBoolean(getString(R.string.shared_pref_app_state_changed_key), false);
+      editor.apply();
+
+      taskGroupModelList.clear();
+
+      taskListList.clear();
+
+      fetchRemoteData();
+    }
+  }
+
+  @Override
+  protected void onDestroy()
+  {
+    super.onDestroy();
+
+    if(networkBroadcastReceiver != null)
+    {
+      unregisterReceiver(networkBroadcastReceiver);
     }
   }
 
@@ -116,6 +196,14 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
 
     outState.putParcelableArrayList(getString(R.string.task_group_model_object_list_key),
             new ArrayList<>(taskGroupModelList));
+
+    // We must clear the attachment data since the Android platform has strict limits on the amount
+    // of data that can be parceled. Failure to do so will lead to TransactionTooLargeException.
+    for(int i = 0; i < taskListList.size(); ++i)
+    {
+      List<AttachmentInfo> attachmentInfoList = taskListList.get(i).getAttachmentInfoList();
+      attachmentInfoList.clear();
+    }
 
     outState.putParcelableArrayList(getString(R.string.task_list_model_container_object_list_key),
             new ArrayList<Parcelable>(taskListList));
@@ -159,112 +247,137 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
   @Override
   public void onBackgroundSelected(int colorId)
   {
-    setActivityColorTheme(colorId);
-
-    // Update the task group
-    taskGroupModel.setColorKey(colorId);
-
-    // Update the database
-
-    FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference rootDatabaseReference = database.getReference();
-
-    final String taskGroupPrimaryKey = taskGroupModel.getId();
-
-    String taskGroupModelRoot = String.format("/%s/%s/", getString(R.string.db_task_group_object), taskGroupPrimaryKey);
-
-    Map<String, Object> childUpdates = new HashMap<>();
-
-    childUpdates.put(taskGroupModelRoot + getString(R.string.db_task_group_object_color_key),
-            taskGroupModel.getColorKey());
-
-    rootDatabaseReference.updateChildren(childUpdates, new DatabaseReference.CompletionListener()
+    if(TaskMasterUtils.isNetworkAvailable(TaskGroupActivity.this))
     {
-      @Override
-      public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+      setActivityColorTheme(colorId);
+
+      // Update the task group
+      taskGroupModel.setColorKey(colorId);
+
+      // Update the database
+
+      FirebaseDatabase database = FirebaseDatabase.getInstance();
+      DatabaseReference rootDatabaseReference = database.getReference();
+
+      final String taskGroupPrimaryKey = taskGroupModel.getId();
+
+      String taskGroupModelRoot = String.format("/%s/%s/", getString(R.string.db_task_group_object), taskGroupPrimaryKey);
+
+      Map<String, Object> childUpdates = new HashMap<>();
+
+      childUpdates.put(taskGroupModelRoot + getString(R.string.db_task_group_object_color_key),
+              taskGroupModel.getColorKey());
+
+      rootDatabaseReference.updateChildren(childUpdates, new DatabaseReference.CompletionListener()
       {
-        if(databaseError == null)
+        @Override
+        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
         {
-          // write success
-          Log.i("TaskGroupAct", "updated task group color in database");
+          if(databaseError == null)
+          {
+            // write success
+            Log.i("TaskGroupAct", "updated task group color in database");
 
-          SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(TaskGroupActivity.this);
-          SharedPreferences.Editor editor = sharedPreferences.edit();
-
-          editor.putBoolean(getString(R.string.shared_pref_app_state_changed_key), true);
-          editor.apply();
+            TaskMasterUtils.setAppStateDirty(TaskGroupActivity.this);
+          }
+          else
+          {
+            // write failure
+            Log.i("TaskGroupAct", "failed to update task group color in database");
+          }
         }
-        else
-        {
-          // write failure
-          Log.i("TaskGroupAct", "failed to update task group color in database");
-        }
-      }
-    });
+      });
+    }
+    else
+    {
+      Toast.makeText(TaskGroupActivity.this,
+              getString(R.string.error_network_not_available),
+              Toast.LENGTH_LONG).show();
+    }
   }
 
   @Override
   public void onAddCardClick(String cardTitle, String detailedDescription, int position)
   {
-    // forward the click to the task list adapter
-    adapter.onAddCardClick(cardTitle, detailedDescription, position);
+    if(TaskMasterUtils.isNetworkAvailable(TaskGroupActivity.this))
+    {
+      // forward the click to the task list adapter
+      adapter.onAddCardClick(cardTitle, detailedDescription, position);
+    }
+    else
+    {
+      Toast.makeText(TaskGroupActivity.this,
+              getString(R.string.error_network_not_available),
+              Toast.LENGTH_LONG).show();
+    }
   }
 
   @Override
   public void onAddTaskListClick(String taskListName)
   {
-    TaskListModel taskListModel = new TaskListModel(taskGroupModel.getId(),
-            UUID.randomUUID().toString(),
-            taskListList.size(),
-            taskListName);
-
-    TaskListModelContainer taskListModelContainer = new TaskListModelContainer(taskListModel,
-            new ArrayList<TaskListCardModel>(),
-            new ArrayList<DueDateModel>());
-
-    taskListList.add(taskListModelContainer);
-
-    // Update the database
-    FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference rootDatabaseReference = database.getReference();
-
-    String taskListModelRoot = String.format("/%s/%s/", getString(R.string.db_task_list_object),
-            taskListModelContainer.getTaskListModel().getTaskListId());
-
-    String taskGroupTaskListRoot = String.format("/%s/%s/", getString(R.string.db_task_group_task_list_key), taskGroupModel.getId());
-
-    Map<String, Object> childUpdates = new HashMap<>();
-
-    childUpdates.put(taskListModelRoot + getString(R.string.db_task_list_index_key),
-            taskListList.size() - 1);
-
-    childUpdates.put(taskListModelRoot + getString(R.string.db_task_list_title_key),
-            taskListModel.getTitle());
-
-    // add the task list to the collection of task lists in the task_group_task_list
-    childUpdates.put(taskGroupTaskListRoot + taskListModel.getTaskListId(),
-            taskListModel.getTaskIndex());
-
-    rootDatabaseReference.updateChildren(childUpdates, new DatabaseReference.CompletionListener()
+    if(TaskMasterUtils.isNetworkAvailable(TaskGroupActivity.this))
     {
-      @Override
-      public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
-      {
-        if(databaseError == null)
-        {
-          // write success
-          Log.i("TaskGroupAct", "wrote task list to database");
-        }
-        else
-        {
-          // write failure
-          Log.i("TaskGroupAct", "failed to write task list to database");
-        }
-      }
-    });
+      TaskListModel taskListModel = new TaskListModel(taskGroupModel.getId(),
+              UUID.randomUUID().toString(),
+              taskListList.size(),
+              taskListName);
 
-    // Notify the adapter
-    adapter.notifyDataSetChanged();
+      TaskListModelContainer taskListModelContainer = new TaskListModelContainer(taskListModel,
+              new ArrayList<TaskListCardModel>(),
+              new ArrayList<DueDateModel>(),
+              new ArrayList<ChecklistCompletionCounter>(),
+              new ArrayList<AttachmentInfo>());
+
+      taskListList.add(taskListModelContainer);
+
+      // Update the database
+      FirebaseDatabase database = FirebaseDatabase.getInstance();
+      DatabaseReference rootDatabaseReference = database.getReference();
+
+      String taskListModelRoot = String.format("/%s/%s/", getString(R.string.db_task_list_object),
+              taskListModelContainer.getTaskListModel().getTaskListId());
+
+      String taskGroupTaskListRoot = String.format("/%s/%s/", getString(R.string.db_task_group_task_list_key), taskGroupModel.getId());
+
+      Map<String, Object> childUpdates = new HashMap<>();
+
+      childUpdates.put(taskListModelRoot + getString(R.string.db_task_list_index_key),
+              taskListList.size() - 1);
+
+      childUpdates.put(taskListModelRoot + getString(R.string.db_task_list_title_key),
+              taskListModel.getTitle());
+
+      // add the task list to the collection of task lists in the task_group_task_list
+      childUpdates.put(taskGroupTaskListRoot + taskListModel.getTaskListId(),
+              taskListModel.getTaskIndex());
+
+      rootDatabaseReference.updateChildren(childUpdates, new DatabaseReference.CompletionListener()
+      {
+        @Override
+        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+        {
+          if(databaseError == null)
+          {
+            // write success
+            Log.i("TaskGroupAct", "wrote task list to database");
+          }
+          else
+          {
+            // write failure
+            Log.i("TaskGroupAct", "failed to write task list to database");
+          }
+        }
+      });
+
+      // Notify the adapter
+      adapter.notifyDataSetChanged();
+    }
+    else
+    {
+      Toast.makeText(TaskGroupActivity.this,
+              getString(R.string.error_network_not_available),
+              Toast.LENGTH_LONG).show();
+    }
   }
 
   @Override
@@ -274,119 +387,24 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
   {
     if(currentTaskGroupIndex != newTaskGroupIndex)
     {
-      // remove the task list from the list, change indexes too
-      final TaskListModelContainer taskListModelToMove = taskListList.remove(taskListIndex);
-
-      final String destinationTaskGroupId = taskGroupModelList.get(newTaskGroupIndex).getId();
-
-      for(int i = taskListIndex; i < taskListList.size(); ++i)
+      if(TaskMasterUtils.isNetworkAvailable(TaskGroupActivity.this))
       {
-        TaskListModel taskListModel = taskListList.get(i).getTaskListModel();
-        taskListModel.setTaskIndex(i);
+        // remove the task list from the list, change indexes too
+        final TaskListModelContainer taskListModelToMove = taskListList.remove(taskListIndex);
 
-        // update the database for each changed entry (task_list and task_group_task_list)
-        updateTaskListWithTaskIndex(taskListModel.getTaskListId(),
-                taskListModel.getTaskIndex(),
-                taskGroupModel.getId(),
-                new DatabaseReference.CompletionListener()
+        final String destinationTaskGroupId = taskGroupModelList.get(newTaskGroupIndex).getId();
+
+        for(int i = taskListIndex; i < taskListList.size(); ++i)
         {
-          @Override
-          public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
-          {
-            if(databaseError == null)
-            {
-              // write success
-              Log.i("TaskGroupAct", "updated the task list index in the database");
-            }
-            else
-            {
-              // write failure
-              Log.i("TaskGroupAct", "failed to update the task list index in the database");
-            }
-          }
-        });
+          TaskListModel taskListModel = taskListList.get(i).getTaskListModel();
+          taskListModel.setTaskIndex(i);
 
-        // update the task index for all of your child cards
-        TaskListModelContainer taskListModelContainer = taskListList.get(i);
-        List<TaskListCardModel> taskListCardModelList = taskListModelContainer.getCardList();
-        for(int j = 0; j < taskListCardModelList.size(); ++j)
-        {
-          TaskListCardModel taskListCardModel = taskListCardModelList.get(j);
-
-          taskListCardModel.setTaskIndex(taskListModelContainer.getTaskListModel().getTaskIndex());
-
-          // update the database too
-
-          updateTaskListCardWithTaskIndex(taskListCardModel.getCardId(),
-                  taskListCardModel.getTaskIndex(),
+          // update the database for each changed entry (task_list and task_group_task_list)
+          FirebaseRealtimeDbProvider.updateTaskListWithTaskIndex(TaskGroupActivity.this,
+                  taskListModel.getTaskListId(),
+                  taskListModel.getTaskIndex(),
+                  taskGroupModel.getId(),
                   new DatabaseReference.CompletionListener()
-          {
-            @Override
-            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
-            {
-              if(databaseError == null)
-              {
-                // write success
-                Log.i("TaskGroupAct", "updated the task list index of the task list card in the database");
-              }
-              else
-              {
-                // write failure
-                Log.i("TaskGroupAct", "failed to update the task list index of the task list card in the database");
-              }
-            }
-          });
-        }
-      }
-
-      FirebaseDatabase database = FirebaseDatabase.getInstance();
-      DatabaseReference rootDatabaseReference = database.getReference();
-      //
-      // Perform the task list move within the database, change indexes too
-      //
-      // 1) Get all of the indexes of the task lists from the destination task group
-      //   (task_group_task_list)
-      //
-      // 2) Set the index of the removed task list to be the index after the last element
-      //    in the destination task group (task_list).
-      //
-      // 3) Add the task list that we removed from this group to the destination group
-      //   (task_group_task_list) while also removing it from the source task group
-      //   (task_group_task_list)
-      //
-      // 4) Finally update the task list index of all the child cards of the moved task list
-      //
-      rootDatabaseReference.child(getString(R.string.db_task_group_task_list_key)).child(destinationTaskGroupId)
-              .orderByValue()
-              .limitToLast(1)
-              .addListenerForSingleValueEvent(new ValueEventListener()
-              {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot)
-                {
-                  // we need to handle the case where we move a task list to a task group that has
-                  // no existing task lists. In that case, the last task index is 0.
-
-                  int newTaskIndex = 0;
-                  if(dataSnapshot.hasChildren())
-                  {
-                    DataSnapshot taskListSnapShot = dataSnapshot.getChildren().iterator().next();
-
-                    Long lastTaskIndexLong = taskListSnapShot.getValue(Long.class);
-
-                    int lastTaskIndex = lastTaskIndexLong != null ? lastTaskIndexLong.intValue() : 0;
-
-                    newTaskIndex = lastTaskIndex + 1;
-                  }
-
-                  final TaskListModel taskListModel = taskListModelToMove.getTaskListModel();
-
-                  taskListModel.setTaskIndex(newTaskIndex);
-
-                  updateTaskListWithTaskIndex(taskListModel.getTaskListId(),
-                          taskListModel.getTaskIndex(),
-                          destinationTaskGroupId,
-                          new DatabaseReference.CompletionListener()
                   {
                     @Override
                     public void onComplete(DatabaseError databaseError,
@@ -395,110 +413,257 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
                       if(databaseError == null)
                       {
                         // write success
-                        Log.i("TaskGroupAct", "updated the task list index of the moved task list in the database");
-
-                        addTaskListToTaskGroup(taskListModel.getTaskListId(),
-                                taskListModel.getTaskIndex(),
-                                destinationTaskGroupId,
-                                new DatabaseReference.CompletionListener()
-                        {
-                          @Override
-                          public void onComplete(DatabaseError databaseError,
-                                                 DatabaseReference databaseReference)
-                          {
-                            if(databaseError == null)
-                            {
-                              // write success
-                              Log.i("TaskGroupAct", "added the moved task list to the database");
-
-                              removeTaskListFromTaskGroup(taskListModel.getTaskListId(),
-                                      taskGroupModel.getId(),
-                                      new DatabaseReference.CompletionListener()
-                              {
-                                @Override
-                                public void onComplete(DatabaseError databaseError,
-                                                       DatabaseReference databaseReference)
-                                {
-                                  if(databaseError == null)
-                                  {
-                                    // remove success
-                                    Log.i("TaskGroupAct", "removed the moved task list from the old position in the database");
-
-                                    List<TaskListCardModel> taskListCardModelList = taskListModelToMove.getCardList();
-                                    for(int i = 0; i < taskListModelToMove.getCardList().size(); ++i)
-                                    {
-                                      TaskListCardModel taskListCardModel = taskListCardModelList.get(i);
-
-                                      taskListCardModel.setTaskIndex(taskListModel.getTaskIndex());
-
-                                      // update the database too
-                                      updateTaskListCardWithTaskIndex(taskListCardModel.getCardId(),
-                                              taskListCardModel.getTaskIndex(),
-                                              new DatabaseReference.CompletionListener()
-                                      {
-                                        @Override
-                                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
-                                        {
-                                          if(databaseError == null)
-                                          {
-                                            // write success
-                                            Log.i("TaskGroupAct", "updated the task list index of the task list card in the database");
-                                          }
-                                          else
-                                          {
-                                            // write failure
-                                            Log.i("TaskGroupAct", "failed to update the task list index of the task list card in the database");
-                                          }
-                                        }
-                                      });
-                                    }
-                                  }
-                                  else
-                                  {
-                                    // remove failure
-                                    Log.i("TaskGroupAct", "failed to remove the moved task list from the old position in the database");
-                                  }
-                                }
-                              });
-                            }
-                            else
-                            {
-                              // write failure
-                              Log.i("TaskGroupAct", "failed to add the moved task list to the database");
-                            }
-                          }
-                        });
+                        Log.i("TaskGroupAct", "updated the task list index in the database");
                       }
                       else
                       {
                         // write failure
-                        Log.i("TaskGroupAct", "failed to update the task list index of the moved task list in the database");
+                        Log.i("TaskGroupAct", "failed to update the task list index in the database");
                       }
                     }
                   });
-                }
 
-                @Override
-                public void onCancelled(DatabaseError databaseError)
+          // update the task index for all of your child cards
+          TaskListModelContainer taskListModelContainer = taskListList.get(i);
+          List<TaskListCardModel> taskListCardModelList = taskListModelContainer.getCardList();
+          for(int j = 0; j < taskListCardModelList.size(); ++j)
+          {
+            TaskListCardModel taskListCardModel = taskListCardModelList.get(j);
+
+            taskListCardModel.setTaskIndex(taskListModelContainer.getTaskListModel().getTaskIndex());
+
+            // update the database too
+
+            FirebaseRealtimeDbProvider.updateTaskListCardWithTaskIndex(TaskGroupActivity.this,
+                    taskListCardModel.getCardId(),
+                    taskListCardModel.getTaskIndex(),
+                    new DatabaseReference.CompletionListener()
+                    {
+                      @Override
+                      public void onComplete(DatabaseError databaseError,
+                                             DatabaseReference databaseReference)
+                      {
+                        if(databaseError == null)
+                        {
+                          // write success
+                          Log.i("TaskGroupAct", "updated the task list index of the task list card in the database");
+                        }
+                        else
+                        {
+                          // write failure
+                          Log.i("TaskGroupAct", "failed to update the task list index of the task list card in the database");
+                        }
+                      }
+                    });
+          }
+        }
+
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference rootDatabaseReference = database.getReference();
+        //
+        // Perform the task list move within the database, change indexes too
+        //
+        // 1) Get all of the indexes of the task lists from the destination task group
+        //   (task_group_task_list)
+        //
+        // 2) Set the index of the removed task list to be the index after the last element
+        //    in the destination task group (task_list).
+        //
+        // 3) Add the task list that we removed from this group to the destination group
+        //   (task_group_task_list) while also removing it from the source task group
+        //   (task_group_task_list)
+        //
+        // 4) Finally update the task list index of all the child cards of the moved task list
+        //
+        rootDatabaseReference.child(getString(R.string.db_task_group_task_list_key)).child(destinationTaskGroupId)
+                .orderByValue()
+                .limitToLast(1)
+                .addListenerForSingleValueEvent(new ValueEventListener()
                 {
-                  Log.i("TaskGroupAct", "failed to get task list id from database");
-                }
-              });
+                  @Override
+                  public void onDataChange(DataSnapshot dataSnapshot)
+                  {
+                    // we need to handle the case where we move a task list to a task group that has
+                    // no existing task lists. In that case, the last task index is 0.
 
-      // Notify the adapter
-      adapter.notifyDataSetChanged();
+                    int newTaskIndex = 0;
+                    if(dataSnapshot.hasChildren())
+                    {
+                      DataSnapshot taskListSnapShot = dataSnapshot.getChildren().iterator().next();
+
+                      Long lastTaskIndexLong = taskListSnapShot.getValue(Long.class);
+
+                      int lastTaskIndex = lastTaskIndexLong != null ? lastTaskIndexLong.intValue() : 0;
+
+                      newTaskIndex = lastTaskIndex + 1;
+                    }
+
+                    final TaskListModel taskListModel = taskListModelToMove.getTaskListModel();
+
+                    taskListModel.setTaskIndex(newTaskIndex);
+
+                    FirebaseRealtimeDbProvider.updateTaskListWithTaskIndex(TaskGroupActivity.this,
+                            taskListModel.getTaskListId(),
+                            taskListModel.getTaskIndex(),
+                            destinationTaskGroupId,
+                            new DatabaseReference.CompletionListener()
+                            {
+                              @Override
+                              public void onComplete(DatabaseError databaseError,
+                                                     DatabaseReference databaseReference)
+                              {
+                                if(databaseError == null)
+                                {
+                                  // write success
+                                  Log.i("TaskGroupAct", "updated the task list index of the moved task list in the database");
+
+                                  FirebaseRealtimeDbProvider.addTaskListToTaskGroup(TaskGroupActivity.this,
+                                          taskListModel.getTaskListId(),
+                                          taskListModel.getTaskIndex(),
+                                          destinationTaskGroupId,
+                                          new DatabaseReference.CompletionListener()
+                                          {
+                                            @Override
+                                            public void onComplete(DatabaseError databaseError,
+                                                                   DatabaseReference databaseReference)
+                                            {
+                                              if(databaseError == null)
+                                              {
+                                                // write success
+                                                Log.i("TaskGroupAct", "added the moved task list to the database");
+
+                                                FirebaseRealtimeDbProvider.removeTaskListFromTaskGroup(TaskGroupActivity.this,
+                                                        taskListModel.getTaskListId(),
+                                                        taskGroupModel.getId(),
+                                                        new DatabaseReference.CompletionListener()
+                                                        {
+                                                          @Override
+                                                          public void onComplete(
+                                                                  DatabaseError databaseError,
+                                                                  DatabaseReference databaseReference)
+                                                          {
+                                                            if(databaseError == null)
+                                                            {
+                                                              // remove success
+                                                              Log.i("TaskGroupAct", "removed the moved task list from the old position in the database");
+
+                                                              List<TaskListCardModel> taskListCardModelList = taskListModelToMove.getCardList();
+                                                              for(int i = 0; i < taskListModelToMove.getCardList().size(); ++i)
+                                                              {
+                                                                TaskListCardModel taskListCardModel = taskListCardModelList.get(i);
+
+                                                                taskListCardModel.setTaskIndex(taskListModel.getTaskIndex());
+
+                                                                // update the database too
+                                                                FirebaseRealtimeDbProvider.updateTaskListCardWithTaskIndex(TaskGroupActivity.this,
+                                                                        taskListCardModel.getCardId(),
+                                                                        taskListCardModel.getTaskIndex(),
+                                                                        new DatabaseReference.CompletionListener()
+                                                                        {
+                                                                          @Override
+                                                                          public void onComplete(
+                                                                                  DatabaseError databaseError,
+                                                                                  DatabaseReference databaseReference)
+                                                                          {
+                                                                            if(databaseError == null)
+                                                                            {
+                                                                              // write success
+                                                                              Log.i("TaskGroupAct", "updated the task list index of the task list card in the database");
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                              // write failure
+                                                                              Log.i("TaskGroupAct", "failed to update the task list index of the task list card in the database");
+                                                                            }
+                                                                          }
+                                                                        });
+                                                              }
+                                                            }
+                                                            else
+                                                            {
+                                                              // remove failure
+                                                              Log.i("TaskGroupAct", "failed to remove the moved task list from the old position in the database");
+                                                            }
+                                                          }
+                                                        });
+                                              }
+                                              else
+                                              {
+                                                // write failure
+                                                Log.i("TaskGroupAct", "failed to add the moved task list to the database");
+                                              }
+                                            }
+                                          });
+                                }
+                                else
+                                {
+                                  // write failure
+                                  Log.i("TaskGroupAct", "failed to update the task list index of the moved task list in the database");
+                                }
+                              }
+                            });
+                  }
+
+                  @Override
+                  public void onCancelled(DatabaseError databaseError)
+                  {
+                    Log.i("TaskGroupAct", "failed to get task list id from database");
+                  }
+                });
+
+        // Notify the adapter
+        adapter.notifyDataSetChanged();
+      }
+      else
+      {
+        Toast.makeText(TaskGroupActivity.this,
+                getString(R.string.error_network_not_available),
+                Toast.LENGTH_LONG).show();
+      }
     }
   }
 
   @Override
-  public void onTaskListCardClick(String taskListTitle,TaskListCardModel taskListCardModel)
+  public void onTaskListCardClick(String taskListTitle,
+                                  TaskListCardModel taskListCardModel)
   {
-    Intent intent = CardDetailActivity.getStartIntent(this,
-            taskGroupModel.getTitle(),
-            taskListTitle,
-            taskListCardModel);
+    if(TaskMasterUtils.isNetworkAvailable(TaskGroupActivity.this))
+    {
+      Intent intent = CardDetailActivity.getStartIntent(this,
+              taskGroupModel,
+              taskListTitle,
+              taskListCardModel,
+              taskGroupModelList);
 
-    startActivity(intent);
+      startActivity(intent);
+    }
+    else
+    {
+      Toast.makeText(TaskGroupActivity.this,
+              getString(R.string.error_network_not_available),
+              Toast.LENGTH_LONG).show();
+    }
+  }
+
+  @Override
+  public void onNetworkActive()
+  {
+    if(fetchAttachmentDataFlag)
+    {
+      fetchAttachmentData();
+
+      fetchAttachmentDataFlag = false;
+    }
+    else if(taskListList.isEmpty())
+    {
+      fetchRemoteData();
+    }
+  }
+
+  @Override
+  public void onNetworkInactive()
+  {
+
   }
 
   private void setupRecyclerView()
@@ -572,78 +737,28 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
     setupRecyclerView();
   }
 
-  private void updateTaskListWithTaskIndex(String taskListId,
-                                           int taskIndex,
-                                           String taskGroupId,
-                                           DatabaseReference.CompletionListener completionListener)
+  private void fetchAttachmentData()
   {
-    FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference rootDatabaseReference = database.getReference();
+    for(int taskIndex = 0; taskIndex < taskListList.size(); ++taskIndex)
+    {
+      TaskListModelContainer taskListModelContainer = taskListList.get(taskIndex);
+      List<TaskListCardModel> taskListCardModelList = taskListModelContainer.getCardList();
 
-    String taskListModelRoot = String.format("/%s/%s/", getString(R.string.db_task_list_object),
-            taskListId);
+      for(int cardIndex = 0; cardIndex < taskListCardModelList.size(); ++cardIndex)
+      {
+        TaskListCardModel taskListCardModel = taskListCardModelList.get(cardIndex);
 
-    String taskGroupTaskListRoot = String.format("/%s/%s/", getString(R.string.db_task_group_task_list_key),
-            taskGroupId);
+        // Added null attachment info data for now
+        taskListList.get(taskIndex).getAttachmentInfoList().add(null);
 
-    Map<String, Object> childUpdates = new HashMap<>();
-
-    childUpdates.put(taskListModelRoot + getString(R.string.db_task_list_index_key),
-            taskIndex);
-
-    childUpdates.put(taskGroupTaskListRoot + taskListId,
-            taskIndex);
-
-    rootDatabaseReference.updateChildren(childUpdates, completionListener);
-  }
-
-  private void addTaskListToTaskGroup(String taskListId,
-                                      int taskIndex,
-                                      String taskGroupId,
-                                      DatabaseReference.CompletionListener completionListener)
-  {
-    FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference rootDatabaseReference = database.getReference();
-
-    Map<String, Object> childUpdates = new HashMap<>();
-
-    childUpdates.put(taskListId, taskIndex);
-
-    rootDatabaseReference.child(getString(R.string.db_task_group_task_list_key))
-            .child(taskGroupId)
-            .updateChildren(childUpdates, completionListener);
-  }
-
-
-  private void removeTaskListFromTaskGroup(String taskListId,
-                                           String taskGroupId,
-                                           DatabaseReference.CompletionListener completionListener)
-  {
-    FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference rootDatabaseReference = database.getReference();
-
-    rootDatabaseReference.child(getString(R.string.db_task_group_task_list_key))
-            .child(taskGroupId)
-            .child(taskListId)
-            .removeValue(completionListener);
-  }
-
-  private void updateTaskListCardWithTaskIndex(String taskListCardId,
-                                               int taskIndex,
-                                               DatabaseReference.CompletionListener completionListener)
-  {
-    FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference rootDatabaseReference = database.getReference();
-
-    String taskListCardModelRoot = String.format("/%s/%s/", getString(R.string.db_task_list_card_object_key),
-            taskListCardId);
-
-    Map<String, Object> childUpdates = new HashMap<>();
-
-    childUpdates.put(taskListCardModelRoot + getString(R.string.db_task_list_card_task_index_key),
-            taskIndex);
-
-    rootDatabaseReference.updateChildren(childUpdates, completionListener);
+        // fetch attachment info
+        FirebaseRealtimeDbProvider.startAttachmentInfoFetch(TaskGroupActivity.this,
+                taskListCardModel.getCardId(),
+                taskIndex,
+                cardIndex,
+                taskListList);
+      }
+    }
   }
 
   private void fetchRemoteData()
@@ -680,6 +795,19 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
             });
   }
 
+  private void launchBroadcastReceiverIfNotRegistered()
+  {
+    if(networkBroadcastReceiver == null)
+    {
+      IntentFilter networkIntentFilter = new IntentFilter();
+      networkIntentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+
+      networkBroadcastReceiver = new NetworkBroadcastReceiver(this);
+
+      registerReceiver(networkBroadcastReceiver, networkIntentFilter);
+    }
+  }
+
   class TaskListValueEventListener implements ValueEventListener
   {
     private String taskListId;
@@ -700,7 +828,11 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
 
       TaskListModel taskListModel = new TaskListModel(taskGroupModel.getId(), taskListId, taskListIndex, taskListTitle);
 
-      TaskListModelContainer container = new TaskListModelContainer(taskListModel, new ArrayList<TaskListCardModel>(), new ArrayList<DueDateModel>());
+      TaskListModelContainer container = new TaskListModelContainer(taskListModel,
+              new ArrayList<TaskListCardModel>(),
+              new ArrayList<DueDateModel>(),
+              new ArrayList<ChecklistCompletionCounter>(),
+              new ArrayList<AttachmentInfo>());
 
       taskListList.add(container);
 
@@ -780,11 +912,15 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
       // Add a null due date for now and add a valid due date if one exists
       taskListList.get(taskIndex).getDueDateModelList().add(null);
 
-      // TODO: You still need to check for checklists, and attachments and set the appropriate icons
+      // Add null checklist completion data for now and add valid completion data if it exists
+      taskListList.get(taskIndex).getChecklistCompletionCounterList().add(null);
+
+      // Added null attachment info data for now
+      taskListList.get(taskIndex).getAttachmentInfoList().add(null);
 
       DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
 
-      // Grab the due associated with the specified task list card
+      // Grab the due date associated with the specified task list card
       databaseReference.child(getString(R.string.db_due_date_object)).child(taskListCardModel.getCardId())
               .addListenerForSingleValueEvent(new ValueEventListener()
               {
@@ -798,11 +934,9 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
 
                     boolean completed = completedBoolean != null ? completedBoolean : false;
 
-                    // Remember we don't care if the due date has been marked completed
+                    // We ignore a due date that has been marked completed
                     if(!completed)
                     {
-                      Log.i("TaskGroupAct", "found a due date that is not completed");
-
                       Long dueDateLong = dataSnapshot.child(getString(R.string.db_due_date_due_date_key)).getValue(Long.class);
 
                       long dueDate = dueDateLong != null ? dueDateLong : 0;
@@ -826,6 +960,20 @@ public class TaskGroupActivity extends AppCompatActivity implements IChooseBackg
                   Log.i("TaskGroupAct", "failed to grab the due date for task list card");
                 }
               });
+
+      // fetch checklist info
+      FirebaseRealtimeDbProvider.startChecklistCounterFetch(TaskGroupActivity.this,
+              taskListCardId,
+              taskIndex,
+              cardIndex,
+              taskListList);
+
+      // fetch attachment info
+      FirebaseRealtimeDbProvider.startAttachmentInfoFetch(TaskGroupActivity.this,
+              taskListCardId,
+              taskIndex,
+              cardIndex,
+              taskListList);
 
       // since a task list creates the adapter for its list of cards via on bind view holder, and
       // a task list itself is also an item in a recycler, we must check for null here because the
