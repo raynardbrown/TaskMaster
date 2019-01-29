@@ -1,13 +1,16 @@
 package com.example.android.taskmaster.view;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.databinding.DataBindingUtil;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 
@@ -15,8 +18,14 @@ import com.example.android.taskmaster.R;
 import com.example.android.taskmaster.databinding.ChecklistDropDownItemBinding;
 import com.example.android.taskmaster.model.ChecklistItemModel;
 import com.example.android.taskmaster.utils.TaskMasterUtils;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<CardDetailChecklistDropDownAdapter.CardDetailChecklistDropDownAdapterViewHolder>
 {
@@ -96,6 +105,9 @@ public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<Car
       // add the listeners
       itemBinding.etCardDetailActivityChecklistItemName.setOnTouchListener(new ChecklistItemOnTouchListener());
       itemBinding.etCardDetailActivityChecklistItemName.setOnFocusChangeListener(new AddItemFocusListener(itemBinding.etCardDetailActivityChecklistItemName));
+
+      // remove the change listener
+      itemBinding.cbCardDetailActivityChecklistItem.setOnCheckedChangeListener(null);
     }
     else
     {
@@ -114,11 +126,16 @@ public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<Car
       }
 
       // add the listeners
+      itemBinding.cbCardDetailActivityChecklistItem.setOnTouchListener(new ChecklistItemCheckListener());
+      itemBinding.cbCardDetailActivityChecklistItem.setOnCheckedChangeListener(new ChecklistItemCheckChangeListener(holder));
       itemBinding.etCardDetailActivityChecklistItemName.setOnTouchListener(new ChecklistItemOnTouchListener());
       itemBinding.etCardDetailActivityChecklistItemName.setOnFocusChangeListener(new ChecklistItemFocusListener(itemBinding.etCardDetailActivityChecklistItemName,
-              position,
+              holder,
               itemBinding.menuButtonCardDetailActivityChecklistItemDelete));
       itemBinding.menuButtonCardDetailActivityChecklistItemDelete.setOnClickListener(new ChecklistItemDeleteButtonClickListener(holder));
+
+      // set the check state
+      itemBinding.cbCardDetailActivityChecklistItem.setChecked(checklistList.get(position).isCompleted());
     }
   }
 
@@ -151,6 +168,7 @@ public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<Car
 
         // Grab the text and add the item to the list if and only if the string is not empty
         ChecklistItemModel checklistItemModel = new ChecklistItemModel(parentChecklistId,
+                UUID.randomUUID().toString(),
                 newText,
                 checklistList.size(),
                 false);
@@ -162,7 +180,53 @@ public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<Car
 
         completeSuccess = true;
 
-        // TODO: update the database too
+        // update the database
+
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference rootDatabaseReference = database.getReference();
+
+        Resources res = editText.getResources();
+
+        String checklistItemModelRoot = String.format("/%s/%s/", res.getString(R.string.db_checklist_item_object),
+                checklistItemModel.getChecklistItemId());
+
+        String checklistChecklistItemRoot = String.format("/%s/%s/", res.getString(R.string.db_checklist_checklist_item_key),
+                checklistItemModel.getChecklistId());
+
+        Map<String, Object> childUpdates = new HashMap<>();
+
+        childUpdates.put(checklistItemModelRoot + res.getString(R.string.db_checklist_item_title_key),
+                checklistItemModel.getItemTitle());
+
+        childUpdates.put(checklistItemModelRoot + res.getString(R.string.db_checklist_item_index_key),
+                checklistItemModel.getItemIndex());
+
+        childUpdates.put(checklistItemModelRoot + res.getString(R.string.db_checklist_item_completed_key),
+                checklistItemModel.isCompleted());
+
+        // link the checklist item to its checklist
+        childUpdates.put(checklistChecklistItemRoot + checklistItemModel.getChecklistItemId(),
+                checklistItemModel.getItemIndex());
+
+        rootDatabaseReference.updateChildren(childUpdates, new DatabaseReference.CompletionListener()
+        {
+          @Override
+          public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+          {
+            if(databaseError == null)
+            {
+              // write success
+              Log.i("CardDetDropDownAdp", "wrote checklist item to database");
+            }
+            else
+            {
+              // write failure
+              Log.i("CardDetDropDownAdp", "failed to write checklist item to database");
+            }
+          }
+        });
+
+        TaskMasterUtils.setAppStateDirty(editText.getContext());
       }
 
       // normally you would strip the focus first, however clearing the focus triggers our focus
@@ -267,15 +331,15 @@ public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<Car
   class ChecklistItemFocusListener implements View.OnFocusChangeListener
   {
     private EditText editText;
-    private int position;
-    ImageButton deleteButton;
+    private CardDetailChecklistDropDownAdapterViewHolder holder;
+    private ImageButton deleteButton;
 
     ChecklistItemFocusListener(EditText editText,
-                               int position,
+                               CardDetailChecklistDropDownAdapterViewHolder holder,
                                ImageButton deleteButton)
     {
       this.editText = editText;
-      this.position = position;
+      this.holder = holder;
       this.deleteButton = deleteButton;
     }
 
@@ -312,19 +376,87 @@ public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<Car
                 hideCommitButton,
                 null);
 
+        final boolean changed = hasChanged();
+
         commitUiChanges();
 
-        // TODO: Update database
+        // Update the database
+        if(changed)
+        {
+          FirebaseDatabase database = FirebaseDatabase.getInstance();
+          DatabaseReference rootDatabaseReference = database.getReference();
+
+          Resources res = editText.getResources();
+
+          ChecklistItemModel checklistItemModel = checklistList.get(holder.getAdapterPosition());
+
+          String checklistItemRoot = String.format("/%s/%s/", res.getString(R.string.db_checklist_item_object),
+                  checklistItemModel.getChecklistItemId());
+
+          Map<String, Object> childUpdates = new HashMap<>();
+
+          childUpdates.put(checklistItemRoot + res.getString(R.string.db_checklist_item_title_key),
+                  checklistItemModel.getItemTitle());
+
+          rootDatabaseReference.updateChildren(childUpdates, new DatabaseReference.CompletionListener()
+          {
+            @Override
+            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+            {
+              if(databaseError == null)
+              {
+                // write success
+                Log.i("CardDetDropDownAdp", "updated checklist item title in database");
+              }
+              else
+              {
+                // write failure
+                Log.i("CardDetDropDownAdp", "failed to update checklist item title in database");
+              }
+            }
+          });
+
+          TaskMasterUtils.setAppStateDirty(editText.getContext());
+        }
       }
     }
 
     private void commitUiChanges()
     {
-      String changedText = editText.getText().toString();
+      int position = holder.getAdapterPosition();
 
-      ChecklistItemModel itemModel = checklistList.get(position);
+      // We need to check if we clicked the delete button when the edit text has focus since the
+      // item would no longer exist at that point
+      if(position != RecyclerView.NO_POSITION)
+      {
+        String changedText = editText.getText().toString();
 
-      itemModel.setItemTitle(changedText);
+        ChecklistItemModel itemModel = checklistList.get(holder.getAdapterPosition());
+
+        itemModel.setItemTitle(changedText);
+      }
+    }
+
+    private boolean hasChanged()
+    {
+      int position = holder.getAdapterPosition();
+
+      // We need to check if we clicked the delete button when the edit text has focus since the
+      // item would no longer exist at that point
+      if(position != RecyclerView.NO_POSITION)
+      {
+        String changedText = editText.getText().toString();
+
+        ChecklistItemModel itemModel = checklistList.get(holder.getAdapterPosition());
+
+        String checkListItemTitle = itemModel.getItemTitle();
+
+        return !checkListItemTitle.equals(changedText);
+      }
+      else
+      {
+        return false;
+      }
     }
   }
 
@@ -336,7 +468,7 @@ public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<Car
     @Override
     public boolean onTouch(View v, MotionEvent event)
     {
-      return false;
+      return TaskMasterUtils.onTouchHelper(v.getContext(), v, event);
     }
   }
 
@@ -353,6 +485,74 @@ public class CardDetailChecklistDropDownAdapter extends RecyclerView.Adapter<Car
     public void onClick(View v)
     {
       deleteChecklistItemListener.onChecklistItemDelete(holder.getAdapterPosition(), checkListIndex);
+    }
+  }
+
+  class ChecklistItemCheckListener implements View.OnTouchListener
+  {
+    @Override
+    public boolean onTouch(View v, MotionEvent event)
+    {
+      return TaskMasterUtils.onTouchHelper(v.getContext(), v, event);
+    }
+  }
+
+  class ChecklistItemCheckChangeListener implements CompoundButton.OnCheckedChangeListener
+  {
+    private CardDetailChecklistDropDownAdapterViewHolder holder;
+
+    ChecklistItemCheckChangeListener(CardDetailChecklistDropDownAdapterViewHolder holder)
+    {
+      this.holder = holder;
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+    {
+      ChecklistItemModel checklistItemModel = checklistList.get(holder.getAdapterPosition());
+
+      if(isChecked)
+      {
+        checklistItemModel.setCompleted(true);
+      }
+      else
+      {
+        checklistItemModel.setCompleted(false);
+      }
+
+      // Update the check state in the database
+      FirebaseDatabase database = FirebaseDatabase.getInstance();
+      DatabaseReference rootDatabaseReference = database.getReference();
+
+      Resources res = buttonView.getResources();
+
+      String checklistItemRoot = String.format("/%s/%s/", res.getString(R.string.db_checklist_item_object),
+              checklistItemModel.getChecklistItemId());
+
+      Map<String, Object> childUpdates = new HashMap<>();
+
+      childUpdates.put(checklistItemRoot + res.getString(R.string.db_checklist_item_completed_key),
+              checklistItemModel.isCompleted());
+
+      rootDatabaseReference.updateChildren(childUpdates, new DatabaseReference.CompletionListener()
+      {
+        @Override
+        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference)
+        {
+          if(databaseError == null)
+          {
+            // write success
+            Log.i("CardDetDropDownAdp", "updated checklist item completed state in database");
+          }
+          else
+          {
+            // write failure
+            Log.i("CardDetDropDownAdp", "failed to update checklist item completed state in database");
+          }
+        }
+      });
+
+      TaskMasterUtils.setAppStateDirty(buttonView.getContext());
     }
   }
 
