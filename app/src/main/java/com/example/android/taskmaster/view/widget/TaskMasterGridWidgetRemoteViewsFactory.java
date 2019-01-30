@@ -2,24 +2,24 @@ package com.example.android.taskmaster.view.widget;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
+import android.database.Cursor;
+import android.net.Uri;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
 import com.example.android.taskmaster.R;
-import com.example.android.taskmaster.model.DueDateModel;
+import com.example.android.taskmaster.model.TaskGroupModel;
 import com.example.android.taskmaster.model.TaskListCardModel;
+import com.example.android.taskmaster.utils.TaskMasterUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Date;
 
 public class TaskMasterGridWidgetRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory
 {
   private Context context;
+  private Cursor cursor;
 
-  private List<DueDateModel> dueDateModelListDummy;
-
-  public TaskMasterGridWidgetRemoteViewsFactory(Context applicationContext)
+  TaskMasterGridWidgetRemoteViewsFactory(Context applicationContext)
   {
     this.context = applicationContext;
   }
@@ -27,50 +27,112 @@ public class TaskMasterGridWidgetRemoteViewsFactory implements RemoteViewsServic
   @Override
   public void onCreate()
   {
-    dueDateModelListDummy = new ArrayList<>();
-
-    dueDateModelListDummy.add(new DueDateModel("123", 123, false));
-    dueDateModelListDummy.add(new DueDateModel("1234", 256, false));
+    // we do nothing here, we defer to onDataSetChanged to initialize the cursor
   }
 
   @Override
   public void onDataSetChanged()
   {
+    if(cursor != null)
+    {
+      cursor.close();
+    }
 
+    Uri dueDateUri = DueDateWidgetContract.DueDateWidgetColumns.CONTENT_URI;
+
+    // sort the data
+    cursor = context.getContentResolver().query(dueDateUri,
+            null,
+            null,
+            null,
+            DueDateWidgetContract.DueDateWidgetColumns.DUE_DATE);
   }
 
   @Override
   public void onDestroy()
   {
-
+    if(cursor != null)
+    {
+      cursor.close();
+    }
   }
 
   @Override
   public int getCount()
   {
-    return dueDateModelListDummy.size();
+    if(cursor == null)
+    {
+      return 0;
+    }
+    else
+    {
+      return cursor.getCount();
+    }
   }
 
   @Override
   public RemoteViews getViewAt(int position)
   {
-    RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.task_master_widget_due_date_item);
+    if(cursor != null)
+    {
+      if(cursor.moveToPosition(position))
+      {
+        String taskListCardId = cursor.getString(cursor.getColumnIndex(DueDateWidgetContract.DueDateWidgetColumns.TASK_LIST_CARD_ID));
+        String taskListCardTitle = cursor.getString(cursor.getColumnIndex(DueDateWidgetContract.DueDateWidgetColumns.TASK_LIST_CARD_TITLE));
+        String detailedDescription = cursor.getString(cursor.getColumnIndex(DueDateWidgetContract.DueDateWidgetColumns.TASK_LIST_CARD_DETAILED));
+        int cardIndex = cursor.getInt(cursor.getColumnIndex(DueDateWidgetContract.DueDateWidgetColumns.TASK_LIST_CARD_INDEX));
+        int taskIndex = cursor.getInt(cursor.getColumnIndex(DueDateWidgetContract.DueDateWidgetColumns.TASK_LIST_INDEX));
+        String taskGroupId = cursor.getString(cursor.getColumnIndex(DueDateWidgetContract.DueDateWidgetColumns.TASK_GROUP_ID));
+        String taskGroupTitle = cursor.getString(cursor.getColumnIndex(DueDateWidgetContract.DueDateWidgetColumns.TASK_GROUP_TITLE));
+        int taskGroupColorKey = cursor.getInt(cursor.getColumnIndex(DueDateWidgetContract.DueDateWidgetColumns.TASK_GROUP_COLOR_KEY));
+        String taskListId = cursor.getString(cursor.getColumnIndex(DueDateWidgetContract.DueDateWidgetColumns.TASK_LIST_ID));
+        String taskListTitle = cursor.getString(cursor.getColumnIndex(DueDateWidgetContract.DueDateWidgetColumns.TASK_LIST_TITLE));
+        long dueDate = cursor.getLong(cursor.getColumnIndex(DueDateWidgetContract.DueDateWidgetColumns.DUE_DATE));
 
-    views.setTextViewText(R.id.tv_widget_due_date_title_item_name, "First item");
-    views.setTextViewText(R.id.tv_widget_due_date_title_item_name, "Second item");
+        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.task_master_widget_due_date_item);
+        views.setTextViewText(R.id.tv_widget_due_date_title_item_name, taskListCardTitle);
 
-    // TODO: Set the pending intent extra to launch the card detail activity
-    Bundle bundle = new Bundle();
-    bundle.putString(context.getString(R.string.task_group_title_key), "Task Group One");
-    bundle.putString(context.getString(R.string.task_list_title_key), "Task List One");
-    bundle.putParcelable(context.getString(R.string.task_list_card_model_object_key), new TaskListCardModel("1", "2", "3", 1, "A New Card", "A new card description", 1));
+        // Set the color of the due date icon
 
-    Intent intent = new Intent();
-    intent.putExtras(bundle);
+        // Note: Widget are limited in how much memory they can use. We cannot use the setImageViewBitmap
+        //       to tweak the image color because we will run out of memory. Furthermore, Android
+        //       does not a provide a way to set tint of an image view using a remote view. At least
+        //       I have not found out how to do this.
+        //
+        //       I have resorted to copying the image resource file and changing the color in each
+        //       file to achieve the same effect. :-(
+        int imageResId = TaskMasterUtils.getImageResIdForDueDate(context, new Date(dueDate));
+        views.setImageViewResource(R.id.iv_widget_due_date_icon, imageResId);
 
-    views.setOnClickFillInIntent(R.id.tv_widget_due_date_title_item_name, intent);
+        TaskGroupModel taskGroupModel = new TaskGroupModel(taskGroupId,
+                taskGroupTitle,
+                taskGroupColorKey);
 
-    return views;
+        TaskListCardModel taskListCardModel = new TaskListCardModel(taskGroupId,
+                taskListId,
+                taskListCardId,
+                taskIndex,
+                taskListCardTitle,
+                detailedDescription,
+                cardIndex);
+
+        Intent cardDetailActivityFillInIntent = new Intent();
+
+        cardDetailActivityFillInIntent.putExtra(context.getString(R.string.task_group_model_object_key), taskGroupModel);
+        cardDetailActivityFillInIntent.putExtra(context.getString(R.string.task_list_title_key), taskListTitle);
+        cardDetailActivityFillInIntent.putExtra(context.getString(R.string.task_list_card_model_object_key), taskListCardModel);
+
+        cardDetailActivityFillInIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+        // launch the card detail activity when this item is clicked
+        views.setOnClickFillInIntent(R.id.tv_widget_due_date_title_item_name, cardDetailActivityFillInIntent);
+
+        return views;
+      }
+    }
+
+    return null;
   }
 
   @Override
