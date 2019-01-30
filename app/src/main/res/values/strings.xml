@@ -52,6 +52,7 @@
     <string name="main_activity_title_string" translatable="true">Task Groups</string>
     <string name="main_activity_menu_item_log_out_string" translatable="true">Log out</string>
     <string name="main_activity_error_no_task_groups_string" translatable="true">No Task Groups</string>
+    <string name="main_activity_error_no_network_string" translatable="true">No Network</string>
 
     <!--
         Main Activity Create Group Dialog Strings
@@ -194,14 +195,24 @@
     <string name="task_group_model_object_list_key" translatable="false">task_group_model_object_list</string>
     <string name="task_list_card_model_object_key" translatable="false">task_list_card_model_object</string>
     <string name="task_list_model_container_object_list_key" translatable="false">task_list_model_container_object_list</string>
-    <string name="task_list_title_key" translatable="false">task_list_title</string>
-    <string name="task_group_title_key" translatable="false">task_group_title</string>
     <string name="due_date_key" translatable="false">due_date</string>
     <string name="due_date_current_drawable_color_key" translatable="false">due_date_current_drawable_color</string>
     <string name="due_date_model_object_key" translatable="false">due_date_model_object</string>
     <string name="check_list_container_list_object_key" translatable="false">check_list_container_list_object</string>
     <string name="attachment_creation_info_list_object_key" translatable="false">attachment_creation_info_list_object</string>
     <string name="attachment_image_toolbar_index_key" translatable="false">attachment_image_toolbar_index</string>
+    <string name="lifecycle_event_with_attachment_key" translatable="false">lifecycle_event_with_attachment</string>
+
+    <string name="task_list_card_id_key" translatable="false">task_list_card_id</string>
+    <string name="task_list_card_title_key" translatable="false">task_list_card_title</string>
+    <string name="task_list_card_detailed_key" translatable="false">task_list_card_detailed</string>
+    <string name="task_list_card_index_key" translatable="false">task_list_card_index</string>
+    <string name="task_list_index_key" translatable="false">task_list_index</string>
+    <string name="task_list_id_key" translatable="false">task_list_id</string>
+    <string name="task_list_title_key" translatable="false">task_list_title</string>
+    <string name="task_group_id_key" translatable="false">task_group_id</string>
+    <string name="task_group_title_key" translatable="false">task_group_title</string>
+    <string name="task_group_color_key" translatable="false">task_group_color</string>
 
     <!--
          Tools resource strings
@@ -282,4 +293,36 @@
     <string name="db_due_date_object" translatable="false">due_date</string>
     <string name="db_due_date_due_date_key" translatable="false">dueDate</string>
     <string name="db_due_date_completed_key" translatable="false">completed</string>
+    <string name="db_checklist_object" translatable="false">checklist</string>
+    <string name="db_checklist_title_key" translatable="false">checklistTitle</string>
+    <string name="db_checklist_index_key" translatable="false">checklistIndex</string>
+    <string name="db_checklist_collapsed_key" translatable="false">collapsed</string>
+    <string name="db_task_list_card_checklist_key" translatable="false">task_list_card_checklist</string>
+    <string name="db_checklist_item_object" translatable="false">checklist_item</string>
+    <string name="db_checklist_item_title_key" translatable="false">itemTitle</string>
+    <string name="db_checklist_item_index_key" translatable="false">itemIndex</string>
+    <string name="db_checklist_item_completed_key" translatable="false">completed</string>
+    <string name="db_checklist_checklist_item_key" translatable="false">checklist_checklist_item</string>
+    <string name="db_attachment_object" translatable="false">attachment</string>
+    <string name="db_attachment_data_key" translatable="false">attachmentData</string>
+    <string name="db_attachment_index_key" translatable="false">attachmentIndex</string>
+    <string name="db_attachment_time_key" translatable="false">attachmentTime</string>
+    <string name="db_attachment_type_key" translatable="false">attachmentType</string>
+    <string name="db_attachment_bound_key" translatable="false">bound</string>
+    <string name="db_task_list_card_attachment_key" translatable="false">task_list_card_attachment</string>
+    <string name="db_attachment_extra_data_object" translatable="false">attachment_extra_data</string>
+    <string name="db_attachment_extra_data_data_key" translatable="false">data</string>
+    <string name="db_attachment_extra_data_type_key" translatable="false">type</string>
+    <string name="db_attachment_attachment_bound_key" translatable="false">attachment_bound</string>
+
+    <!--
+         Service strings
+    -->
+    <string name="due_date_not_completed_list_key" translatable="false">due_date_not_completed_list_key</string>
+
+    <!--
+         Error strings
+    -->
+    <string name="error_network_not_available" translatable="true">No network connection is available</string>
+    <string name="error_user_not_signed_in" translatable="true">Error user not signed in</string>
 </resources>
