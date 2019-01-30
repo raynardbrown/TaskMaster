@@ -12,22 +12,30 @@ public class TaskListModelContainer implements Parcelable
   private TaskListModel taskListModel;
   private List<TaskListCardModel> cardList;
   private List<DueDateModel> dueDateModelList;
+  private List<ChecklistCompletionCounter> checklistCompletionCounterList;
+  private List<AttachmentInfo> attachmentInfoList;
   private TaskListListAdapter taskListListAdapter;
 
   public TaskListModelContainer(TaskListModel taskListModel,
                                 List<TaskListCardModel> cardList,
-                                List<DueDateModel> dueDateModelList)
+                                List<DueDateModel> dueDateModelList,
+                                List<ChecklistCompletionCounter> checklistCompletionCounterList,
+                                List<AttachmentInfo> attachmentInfoList)
   {
     this.taskListModel = taskListModel;
     this.cardList = cardList;
     this.dueDateModelList = dueDateModelList;
+    this.checklistCompletionCounterList = checklistCompletionCounterList;
+    this.attachmentInfoList = attachmentInfoList;
   }
 
-  protected TaskListModelContainer(Parcel in)
+  private TaskListModelContainer(Parcel in)
   {
     taskListModel = in.readParcelable(TaskListModel.class.getClassLoader());
     cardList = in.createTypedArrayList(TaskListCardModel.CREATOR);
     dueDateModelList = in.createTypedArrayList(DueDateModel.CREATOR);
+    checklistCompletionCounterList = in.createTypedArrayList(ChecklistCompletionCounter.CREATOR);
+    attachmentInfoList = in.createTypedArrayList(AttachmentInfo.CREATOR);
   }
 
   @Override
@@ -36,6 +44,8 @@ public class TaskListModelContainer implements Parcelable
     dest.writeParcelable(taskListModel, flags);
     dest.writeTypedList(cardList);
     dest.writeTypedList(dueDateModelList);
+    dest.writeTypedList(checklistCompletionCounterList);
+    dest.writeTypedList(attachmentInfoList);
   }
 
   @Override
@@ -72,6 +82,16 @@ public class TaskListModelContainer implements Parcelable
   public List<DueDateModel> getDueDateModelList()
   {
     return dueDateModelList;
+  }
+
+  public List<ChecklistCompletionCounter> getChecklistCompletionCounterList()
+  {
+    return checklistCompletionCounterList;
+  }
+
+  public List<AttachmentInfo> getAttachmentInfoList()
+  {
+    return attachmentInfoList;
   }
 
   public TaskListListAdapter getTaskListListAdapter()
