@@ -53,6 +53,7 @@
     <string name="main_activity_menu_item_log_out_string" translatable="true">Log out</string>
     <string name="main_activity_error_no_task_groups_string" translatable="true">No Task Groups</string>
     <string name="main_activity_error_no_network_string" translatable="true">No Network</string>
+    <string name="main_activity_action_add_task_group_content_description_string" translatable="true">Add Task Group</string>
 
     <!--
         Main Activity Create Group Dialog Strings
@@ -69,6 +70,15 @@
     <string name="task_group_activity_task_list_menu_item_move_string" translatable="true">Move list</string>
     <string name="task_group_activity_task_list_add_card_button_string" translatable="true">Add Card</string>
     <string name="task_group_activity_task_list_add_task_list_button_string" translatable="true">Add Task List</string>
+    <string name="task_group_activity_action_link_red_background_content_description_string" translatable="true">Select Red Background</string>
+    <string name="task_group_activity_action_link_green_background_content_description_string" translatable="true">Select Green Background</string>
+    <string name="task_group_activity_action_link_blue_background_content_description_string" translatable="true">Select Blue Background</string>
+    <string name="task_group_activity_task_list_menu_content_description_string" translatable="true">Task List Menu</string>
+    <string name="task_group_activity_image_attachment_content_description_string" translatable="true">Image Attachment In TaskList Card</string>
+    <string name="task_group_activity_detailed_description_icon_content_description_string" translatable="true">Detailed Description Icon On TaskList Card</string>
+    <string name="task_group_activity_attachment_icon_content_description_string" translatable="true">Attachment Icon On TaskList Card</string>
+    <string name="task_group_activity_checklist_icon_content_description_string" translatable="true">Checklist Icon On TaskList Card</string>
+    <string name="task_group_activity_due_date_icon_content_description_string" translatable="true">Due Date Icon On TaskList Card</string>
 
     <!--
          Task Group Activity Choose Background Dialog Strings
@@ -131,6 +141,19 @@
     <string name="card_detail_activity_menu_attachment_image_add_to_toolbar_string" translatable="true">Add to toolbar</string>
     <string name="card_detail_activity_menu_attachment_image_remove_from_toolbar_string" translatable="true">Remove from toolbar</string>
     <string name="card_detail_activity_menu_attachment_image_delete_string" translatable="true">Delete</string>
+    <string name="card_detail_activity_toolbar_image_attachment_content_description_string" translatable="true">Attachment In Toolbar</string>
+    <string name="card_detail_activity_due_date_icon_content_description_string" translatable="true">Due Date Icon</string>
+    <string name="card_detail_activity_attachment_icon_content_description_string" translatable="true">Attachment Icon</string>
+    <string name="card_detail_activity_attachment_menu_content_description_string" translatable="true">Attachment Menu</string>
+    <string name="card_detail_activity_attachment_image_content_description_string" translatable="true">Attachment Image</string>
+    <string name="card_detail_activity_checklist_menu_content_description_string" translatable="true">Checklist Menu</string>
+    <string name="card_detail_activity_checklist_icon_content_description_string" translatable="true">Checklist Icon</string>
+    <string name="card_detail_activity_checklist_hide_checklist_items_content_description_string" translatable="true">Hide Checklist Items</string>
+    <string name="card_detail_activity_checklist_show_checklist_items_content_description_string" translatable="true">Show Checklist Items</string>
+    <string name="card_detail_activity_checklist_item_delete_content_description_string" translatable="true">Delete Checklist Item</string>
+    <string name="card_detail_activity_action_image_attachment_icon_content_description_string" translatable="true">Select Image Attachment</string>
+    <string name="card_detail_activity_action_link_attachment_icon_content_description_string" translatable="true">Select Text Link Attachment</string>
+    <string name="card_detail_activity_action_delete_due_date_icon_content_description_string" translatable="true">Delete Due Date</string>
 
     <!--
          Card Detail Activity Due Date Dialog Strings
@@ -256,6 +279,7 @@
     <string name="widget_title_string" translatable="true">Task Due Dates</string>
     <string name="widget_empty_database_error_string" translatable="true">No due dates</string>
     <string name="widget_log_in_button_string" translatable="true">Log In</string>
+    <string name="widget_due_date_icon_content_description_string" translatable="true">Due Date Icon</string>
 
     <!--
          Shared Preferences Strings
