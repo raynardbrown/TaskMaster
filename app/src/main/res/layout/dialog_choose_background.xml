@@ -39,7 +39,8 @@
             app:layout_constraintEnd_toStartOf="@id/view_dialog_choose_background_green"
             app:layout_constraintHorizontal_bias="0.461"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent"
+            android:contentDescription="@string/task_group_activity_action_link_red_background_content_description_string"/>
 
         <View
             android:id="@+id/view_dialog_choose_background_green"
@@ -64,7 +65,8 @@
             app:layout_constraintBottom_toBottomOf="@id/view_dialog_choose_background_red"
             app:layout_constraintEnd_toStartOf="@id/view_dialog_choose_background_indigo"
             app:layout_constraintStart_toEndOf="@id/view_dialog_choose_background_red"
-            app:layout_constraintTop_toTopOf="@id/view_dialog_choose_background_red"/>
+            app:layout_constraintTop_toTopOf="@id/view_dialog_choose_background_red"
+            android:contentDescription="@string/task_group_activity_action_link_green_background_content_description_string"/>
 
         <View
             android:id="@+id/view_dialog_choose_background_indigo"
@@ -90,7 +92,8 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.538"
             app:layout_constraintStart_toEndOf="@id/view_dialog_choose_background_green"
-            app:layout_constraintTop_toTopOf="@id/view_dialog_choose_background_green"/>
+            app:layout_constraintTop_toTopOf="@id/view_dialog_choose_background_green"
+            android:contentDescription="@string/task_group_activity_action_link_blue_background_content_description_string"/>
 
     </android.support.constraint.ConstraintLayout>
 </layout>
