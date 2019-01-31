@@ -3,14 +3,18 @@ package com.example.android.taskmaster.view;
 import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.transition.Slide;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.Window;
 import android.widget.Toast;
 
 import com.example.android.taskmaster.R;
@@ -60,6 +64,16 @@ public class SignUpActivity extends AppCompatActivity
   protected void onCreate(Bundle savedInstanceState)
   {
     super.onCreate(savedInstanceState);
+
+    // must be called before set content view
+    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+    {
+      getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
+
+      // set a slide enter transition
+      getWindow().setEnterTransition(new Slide(Gravity.START));
+    }
+
     binding = DataBindingUtil.setContentView(this, R.layout.activity_sign_up);
 
     firstNameFieldEmpty = true;
