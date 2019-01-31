@@ -10,8 +10,17 @@ android {
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
+    signingConfigs {
+        release {
+            storeFile file("release-keystore.jks")
+            storePassword "123456"
+            keyAlias "release"
+            keyPassword "123456"
+        }
+    }
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -21,6 +30,8 @@ android {
 }
 
 configurations.all {
+    // to resolve "DuplicatePlatformClasses" error when creating a release
+    exclude module: 'commons-logging'
     resolutionStrategy {
         force 'com.android.support:support-annotations:26.1.0'
     }
