@@ -54,7 +54,7 @@
                     app:layout_collapseMode="parallax"
                     app:layout_scrollFlags="scroll|enterAlways|enterAlwaysCollapsed"
                     tools:src="@drawable/architecture_building_driveway_186077_small"
-                    />
+                    android:contentDescription="@string/card_detail_activity_toolbar_image_attachment_content_description_string"/>
 
                 <!--
                      Only visible when we have an image in the toolbar
@@ -163,7 +163,8 @@
                         android:layout_marginStart="16dp"
                         android:layout_marginLeft="16dp"
                         android:layout_marginTop="8dp"
-                        android:src="@drawable/ic_baseline_schedule_24px"/>
+                        android:src="@drawable/ic_baseline_schedule_24px"
+                        android:contentDescription="@string/card_detail_activity_due_date_icon_content_description_string"/>
 
                     <TextView
                         android:id="@+id/tv_card_detail_activity_due_date"
@@ -241,7 +242,8 @@
                             android:layout_marginEnd="16dp"
                             android:layout_marginStart="16dp"
                             android:layout_marginTop="8dp"
-                            android:src="@drawable/ic_baseline_attachment_24px"/>
+                            android:src="@drawable/ic_baseline_attachment_24px"
+                            android:contentDescription="@string/card_detail_activity_attachment_icon_content_description_string"/>
 
                         <TextView
                             android:id="@+id/tv_card_detail_activity_attachment_title_bar_title"
