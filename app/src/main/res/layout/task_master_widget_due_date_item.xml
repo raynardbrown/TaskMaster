@@ -15,7 +15,8 @@
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
         android:src="@drawable/ic_baseline_schedule_24px"
-        tools:src="@drawable/ic_baseline_schedule_24px"/>
+        tools:src="@drawable/ic_baseline_schedule_24px"
+        android:contentDescription="@string/widget_due_date_icon_content_description_string"/>
 
     <TextView
         android:id="@+id/tv_widget_due_date_title_item_name"
