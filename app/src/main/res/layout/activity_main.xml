@@ -86,6 +86,7 @@
             android:src="@drawable/ic_baseline_add_24px"
             app:fabSize="normal"
             app:pressedTranslationZ="12dp"
+            android:contentDescription="@string/main_activity_action_add_task_group_content_description_string"
             />
 
     </android.support.design.widget.CoordinatorLayout>
