@@ -74,7 +74,8 @@
                 app:layout_constraintTop_toTopOf="@+id/spinner_task_group_dialog_due_date_time"
                 android:background="?android:attr/selectableItemBackground"
                 android:src="@drawable/ic_baseline_close_24px"
-                tools:src="@drawable/ic_baseline_close_24px"/>
+                tools:src="@drawable/ic_baseline_close_24px"
+                android:contentDescription="@string/card_detail_activity_action_delete_due_date_icon_content_description_string"/>
         </android.support.constraint.ConstraintLayout>
 
         <!--
@@ -99,7 +100,8 @@
                 app:layout_constraintBottom_toBottomOf="@id/cl_due_date_add_due_date_container"
                 app:layout_constraintStart_toStartOf="@id/cl_due_date_add_due_date_container"
                 android:src="@drawable/ic_baseline_schedule_24px"
-                tools:src="@drawable/ic_baseline_schedule_24px"/>
+                tools:src="@drawable/ic_baseline_schedule_24px"
+                android:contentDescription="@string/card_detail_activity_due_date_icon_content_description_string"/>
 
             <TextView
                 android:id="@+id/tv_due_date_add_due_date"
