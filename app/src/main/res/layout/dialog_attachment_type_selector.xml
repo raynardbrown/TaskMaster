@@ -32,7 +32,8 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 android:src="@drawable/ic_baseline_attachment_24px"
-                tools:src="@drawable/ic_baseline_attachment_24px"/>
+                tools:src="@drawable/ic_baseline_attachment_24px"
+                android:contentDescription="@string/card_detail_activity_action_image_attachment_icon_content_description_string"/>
 
             <TextView
                 android:id="@+id/tv_attach_type_file"
@@ -72,7 +73,8 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintVertical_bias="0.0"
                 android:src="@drawable/ic_baseline_launch_24px"
-                tools:src="@drawable/ic_baseline_launch_24px"/>
+                tools:src="@drawable/ic_baseline_launch_24px"
+                android:contentDescription="@string/card_detail_activity_action_link_attachment_icon_content_description_string"/>
 
             <TextView
                 android:id="@+id/tv_attach_type_link"
