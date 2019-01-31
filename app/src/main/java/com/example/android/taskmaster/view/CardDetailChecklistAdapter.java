@@ -95,15 +95,19 @@ public class CardDetailChecklistAdapter extends RecyclerView.Adapter<CardDetailC
 
     setupCheckListItemRecyclerView(itemBinding, position);
 
+    Context context = itemBinding.chevronButtonChecklist.getContext();
+
     if(checklistList.get(holder.getAdapterPosition()).getChecklistModel().isCollapsed())
     {
       itemBinding.rvChecklist.setVisibility(View.GONE);
       itemBinding.chevronButtonChecklist.setImageDrawable(itemBinding.rvChecklist.getResources().getDrawable(R.drawable.ic_baseline_expand_more_24px));
+      itemBinding.chevronButtonChecklist.setContentDescription(context.getString(R.string.card_detail_activity_checklist_show_checklist_items_content_description_string));
     }
     else
     {
       itemBinding.rvChecklist.setVisibility(View.VISIBLE);
       itemBinding.chevronButtonChecklist.setImageDrawable(itemBinding.rvChecklist.getResources().getDrawable(R.drawable.ic_baseline_expand_less_24px));
+      itemBinding.chevronButtonChecklist.setContentDescription(context.getString(R.string.card_detail_activity_checklist_hide_checklist_items_content_description_string));
     }
   }
 
@@ -376,6 +380,8 @@ public class CardDetailChecklistAdapter extends RecyclerView.Adapter<CardDetailC
     {
       if(TaskMasterUtils.isNetworkAvailable(activity))
       {
+        Context context = chevronButton.getContext();
+
         // show hide the recycler view for the check list change the chevron button too
         if(recyclerView.getVisibility() == View.GONE)
         {
@@ -383,6 +389,8 @@ public class CardDetailChecklistAdapter extends RecyclerView.Adapter<CardDetailC
           chevronButton.setImageDrawable(v.getResources().getDrawable(R.drawable.ic_baseline_expand_less_24px));
 
           checklistList.get(holder.getAdapterPosition()).getChecklistModel().setCollapsed(false);
+
+          chevronButton.setContentDescription(context.getString(R.string.card_detail_activity_checklist_hide_checklist_items_content_description_string));
         }
         else
         {
@@ -390,6 +398,8 @@ public class CardDetailChecklistAdapter extends RecyclerView.Adapter<CardDetailC
           chevronButton.setImageDrawable(v.getResources().getDrawable(R.drawable.ic_baseline_expand_more_24px));
 
           checklistList.get(holder.getAdapterPosition()).getChecklistModel().setCollapsed(true);
+
+          chevronButton.setContentDescription(context.getString(R.string.card_detail_activity_checklist_show_checklist_items_content_description_string));
         }
 
         // Update the database
