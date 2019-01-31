@@ -71,7 +71,8 @@
             app:layout_constraintBottom_toBottomOf="@+id/et_card_detail_activity_checklist_item_name"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            android:visibility="invisible"/>
+            android:visibility="invisible"
+            android:contentDescription="@string/card_detail_activity_checklist_item_delete_content_description_string"/>
 
     </android.support.constraint.ConstraintLayout>
 </layout>
