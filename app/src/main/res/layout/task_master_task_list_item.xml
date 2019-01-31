@@ -37,7 +37,8 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                tools:src="@drawable/architecture_building_driveway_186077_small"/>
+                tools:src="@drawable/architecture_building_driveway_186077_small"
+                android:contentDescription="@string/task_group_activity_image_attachment_content_description_string"/>
 
             <!--
                  Row 2 - Mandatory view
@@ -94,7 +95,8 @@
                     android:src="@drawable/ic_baseline_notes_24px"
                     tools:src="@drawable/ic_baseline_notes_24px"
                     android:visibility="gone"
-                    tools:visibility="visible"/>
+                    tools:visibility="visible"
+                    android:contentDescription="@string/task_group_activity_detailed_description_icon_content_description_string"/>
 
 
                 <ImageView
@@ -109,7 +111,8 @@
                     android:src="@drawable/ic_baseline_attachment_24px"
                     tools:src="@drawable/ic_baseline_attachment_24px"
                     android:visibility="gone"
-                    tools:visibility="visible"/>
+                    tools:visibility="visible"
+                    android:contentDescription="@string/task_group_activity_attachment_icon_content_description_string"/>
 
                 <TextView
                     android:id="@+id/tv_task_list_item_attachment_count"
@@ -136,7 +139,8 @@
                     android:src="@drawable/ic_outline_check_box_24px"
                     tools:src="@drawable/ic_outline_check_box_24px"
                     android:visibility="gone"
-                    tools:visibility="visible"/>
+                    tools:visibility="visible"
+                    android:contentDescription="@string/task_group_activity_checklist_icon_content_description_string"/>
 
                 <TextView
                     android:id="@+id/tv_task_list_item_checklist_completion_ratio"
@@ -151,7 +155,6 @@
                     android:visibility="gone"
                     tools:visibility="visible"/>
 
-
                 <ImageView
                     android:id="@+id/iv_task_list_item_due_date"
                     android:layout_width="wrap_content"
@@ -164,7 +167,8 @@
                     android:src="@drawable/ic_baseline_schedule_24px"
                     tools:src="@drawable/ic_baseline_schedule_24px"
                     android:visibility="gone"
-                    tools:visibility="visible"/>
+                    tools:visibility="visible"
+                    android:contentDescription="@string/task_group_activity_due_date_icon_content_description_string"/>
 
                 <TextView
                     android:id="@+id/tv_task_list_item_due_date"
