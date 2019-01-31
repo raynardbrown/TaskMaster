@@ -42,7 +42,8 @@
                 android:src="@drawable/ic_baseline_attachment_24px"
                 app:layout_constraintBottom_toBottomOf="@+id/tv_attachment_link_type_time"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/tv_attachment_link_type"/>
+                app:layout_constraintTop_toTopOf="@+id/tv_attachment_link_type"
+                android:contentDescription="@string/card_detail_activity_attachment_icon_content_description_string"/>
 
             <TextView
                 android:id="@+id/tv_attachment_link_type"
@@ -88,7 +89,8 @@
                 android:src="@drawable/ic_baseline_more_vert_24px"
                 app:layout_constraintBottom_toBottomOf="@+id/tv_attachment_link_type_time"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/tv_attachment_link_type"/>
+                app:layout_constraintTop_toTopOf="@+id/tv_attachment_link_type"
+                android:contentDescription="@string/card_detail_activity_attachment_menu_content_description_string"/>
         </android.support.constraint.ConstraintLayout>
 
         <!--
@@ -116,7 +118,8 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 android:scaleType="centerCrop"
-                tools:src="@drawable/solid_indigo_square"/>
+                tools:src="@drawable/solid_indigo_square"
+                android:contentDescription="@string/card_detail_activity_attachment_image_content_description_string"/>
 
             <TextView
                 android:id="@+id/tv_attachment_image_type_time"
@@ -150,7 +153,8 @@
                 app:layout_constraintBottom_toBottomOf="@+id/tv_attachment_image_type_time"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@+id/iv_attachment_image_type"
-                tools:src="@drawable/ic_baseline_more_vert_24px"/>
+                tools:src="@drawable/ic_baseline_more_vert_24px"
+                android:contentDescription="@string/card_detail_activity_attachment_menu_content_description_string"/>
 
         </android.support.constraint.ConstraintLayout>
     </android.support.constraint.ConstraintLayout>
