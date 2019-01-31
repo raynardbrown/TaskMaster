@@ -34,7 +34,8 @@
                 app:layout_constraintBottom_toBottomOf="@+id/et_checklist_name"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="@+id/et_checklist_name"
-                tools:src="@drawable/ic_checkbox_marked_outline"/>
+                tools:src="@drawable/ic_checkbox_marked_outline"
+                android:contentDescription="@string/card_detail_activity_checklist_icon_content_description_string"/>
 
             <EditText
                 android:id="@+id/et_checklist_name"
@@ -58,6 +59,12 @@
                 app:layout_constraintHorizontal_bias="0.0"
                 tools:text="@string/card_detail_activity_menu_checklist_default_name_string"/>
 
+            <!--
+                 tools:ignore="contentDescription"
+
+                 We are ignoring the content description warning here because we are setting the
+                 content description in code base on the state of the progressive disclosure.
+            -->
             <ImageButton
                 android:id="@+id/chevron_button_checklist"
                 android:layout_width="wrap_content"
@@ -68,7 +75,8 @@
                 android:src="@drawable/ic_baseline_expand_less_24px"
                 app:layout_constraintBottom_toBottomOf="@+id/et_checklist_name"
                 app:layout_constraintEnd_toStartOf="@+id/menu_button_checklist"
-                app:layout_constraintTop_toTopOf="@+id/et_checklist_name"/>
+                app:layout_constraintTop_toTopOf="@+id/et_checklist_name"
+                tools:ignore="contentDescription"/>
 
             <ImageButton
                 android:id="@+id/menu_button_checklist"
@@ -80,7 +88,8 @@
                 android:src="@drawable/ic_baseline_more_vert_24px"
                 app:layout_constraintBottom_toBottomOf="@+id/et_checklist_name"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/et_checklist_name"/>
+                app:layout_constraintTop_toTopOf="@+id/et_checklist_name"
+                android:contentDescription="@string/card_detail_activity_checklist_menu_content_description_string"/>
 
             <View
                 android:id="@+id/separator"
